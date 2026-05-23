@@ -1,0 +1,175 @@
+@MovieManager.API_HostAddress = http://localhost:5212
+@ContentType = application/json
+
+### ========== GET ALL MOVIES ==========
+### Retrieve all movies from the database
+GET {{MovieManager.API_HostAddress}}/api/movies
+Accept: {{ContentType}}
+
+###
+
+### ========== CREATE NEW MOVIE ==========
+### Create a new movie (example 1)
+POST {{MovieManager.API_HostAddress}}/api/movies
+Content-Type: {{ContentType}}
+
+{
+  "title": "The Shawshank Redemption",
+  "director": "Frank Darabont",
+  "genre": "Drama",
+  "releaseDate": "1994-10-14T00:00:00Z",
+  "rating": 9.3
+}
+
+###
+
+### Create another movie (example 2)
+POST {{MovieManager.API_HostAddress}}/api/movies
+Content-Type: {{ContentType}}
+
+{
+  "title": "Inception",
+  "director": "Christopher Nolan",
+  "genre": "Science Fiction",
+  "releaseDate": "2010-07-16T00:00:00Z",
+  "rating": 8.8
+}
+
+###
+
+### Create third movie (example 3)
+POST {{MovieManager.API_HostAddress}}/api/movies
+Content-Type: {{ContentType}}
+
+{
+  "title": "The Dark Knight",
+  "director": "Christopher Nolan",
+  "genre": "Action",
+  "releaseDate": "2008-07-18T00:00:00Z",
+  "rating": 9.0
+}
+
+###
+
+### ========== GET MOVIE BY ID ==========
+### Retrieve a specific movie by ID (replace MOVIE_ID with actual UUID)
+@movieId = 00000000-0000-0000-0000-000000000000
+
+GET {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
+Accept: {{ContentType}}
+
+###
+
+### ========== UPDATE MOVIE ==========
+### Update an existing movie (replace MOVIE_ID with actual UUID)
+PUT {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
+Content-Type: {{ContentType}}
+
+{
+  "title": "The Shawshank Redemption - Updated",
+  "director": "Frank Darabont",
+  "genre": "Drama",
+  "releaseDate": "1994-10-14T00:00:00Z",
+  "rating": 9.4
+}
+
+###
+
+### ========== DELETE MOVIE ==========
+### Delete a movie by ID (replace MOVIE_ID with actual UUID)
+DELETE {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
+Accept: {{ContentType}}
+
+###
+
+### ========== SEARCH BY TITLE ==========
+### Search movies by title (case-insensitive partial match)
+GET {{MovieManager.API_HostAddress}}/api/movies/search/title/Shawshank
+Accept: {{ContentType}}
+
+###
+
+### Search for "Inception"
+GET {{MovieManager.API_HostAddress}}/api/movies/search/title/Inception
+Accept: {{ContentType}}
+
+###
+
+### Search for movies with "the" in title
+GET {{MovieManager.API_HostAddress}}/api/movies/search/title/the
+Accept: {{ContentType}}
+
+###
+
+### ========== SEARCH BY DIRECTOR ==========
+### Search movies by director name (case-insensitive partial match)
+GET {{MovieManager.API_HostAddress}}/api/movies/search/director/Christopher%20Nolan
+Accept: {{ContentType}}
+
+###
+
+### Search for "Frank Darabont"
+GET {{MovieManager.API_HostAddress}}/api/movies/search/director/Frank%20Darabont
+Accept: {{ContentType}}
+
+###
+
+### ========== SEARCH BY GENRE ==========
+### Search movies by genre (case-insensitive partial match)
+GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Drama
+Accept: {{ContentType}}
+
+###
+
+### Search for action movies
+GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Action
+Accept: {{ContentType}}
+
+###
+
+### Search for sci-fi movies
+GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Science%20Fiction
+Accept: {{ContentType}}
+
+###
+
+### ========== ERROR TESTING ==========
+### Test: Get non-existent movie (should return 404)
+GET {{MovieManager.API_HostAddress}}/api/movies/ffffffff-ffff-ffff-ffff-ffffffffffff
+Accept: {{ContentType}}
+
+###
+
+### Test: Create movie with invalid data (missing required fields - should return 400)
+POST {{MovieManager.API_HostAddress}}/api/movies
+Content-Type: {{ContentType}}
+
+{
+  "title": "",
+  "director": "",
+  "genre": "Drama",
+  "releaseDate": "1994-10-14T00:00:00Z",
+  "rating": 9.3
+}
+
+###
+
+### Test: Create movie with invalid rating (should return 400)
+POST {{MovieManager.API_HostAddress}}/api/movies
+Content-Type: {{ContentType}}
+
+{
+  "title": "Test Movie",
+  "director": "Test Director",
+  "genre": "Drama",
+  "releaseDate": "1994-10-14T00:00:00Z",
+  "rating": 15
+}
+
+###
+
+### Test: Search with empty title (should return 400)
+GET {{MovieManager.API_HostAddress}}/api/movies/search/title/
+Accept: {{ContentType}}
+
+###
