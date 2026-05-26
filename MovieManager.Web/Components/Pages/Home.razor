@@ -2,6 +2,7 @@
 @using MovieManager.Web.Services
 @using MovieManager.Web.DTOs
 @inject iMovieApiService MovieService
+@inject IJSRuntime JS 
 @rendermode InteractiveServer
 
 <div class="container-fluid px-4 py-4">
@@ -101,7 +102,11 @@
                                         <span class="text-muted small ms-1">/ 10</span>
                                     </div>
                                 </td>
-                                <td class="text-muted small">@movie.LastModified.ToString("g")</td>
+                                <td class="text-muted small">
+                                    <time class="local-time" datetime="@movie.LastModified.ToString("yyyy-MM-ddTHH:mm:ssZ")">
+                                        @movie.LastModified.ToString("g") UTC
+                                    </time>
+                                </td>
                                 <td class="text-end px-4">
                                     <div class="btn-group btn-group-sm shadow-sm">
                                         <button class="btn btn-outline-primary" @onclick="() => OpenEditModal(movie)">
@@ -242,6 +247,23 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadGridAsync();
+    }
+
+    // ADD THIS METHOD: It runs every time Blazor updates the HTML
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Only run the script if there are actually movies on the screen
+        if (Movies != null && Movies.Any() && !IsLoading)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("formatLocalTimes");
+            }
+            catch (JSDisconnectedException)
+            {
+                // Ignored: Sometimes thrown if the user navigates away before JS finishes
+            }
+        }
     }
 
     private async Task LoadGridAsync()
