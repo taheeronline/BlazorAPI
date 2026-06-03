@@ -1,5 +1,32 @@
 @MovieManager.API_HostAddress = http://localhost:5212
 @ContentType = application/json
+# After successful login, set @AuthToken to the received token (e.g. Authorization: Bearer <token>)
+
+### ========== CREATE USER (REGISTER) ==========
+### Create a new user account with username "Huzair"
+POST {{MovieManager.API_HostAddress}}/api/auth/register
+Content-Type: {{ContentType}}
+
+{
+  "username": "shams",
+  "email": "shams@example.com",
+  "password": "Shams@123",
+  "role":"Admin"
+}
+
+###
+
+### ========== LOGIN (get JWT) ==========
+### Login as demo user (admin or user) to receive JWT token
+POST {{MovieManager.API_HostAddress}}/api/auth/login
+Content-Type: {{ContentType}}
+
+{
+  "username": "admin",
+  "password": "Admin@123"
+}
+
+###
 
 ### ========== GET ALL MOVIES ==========
 ### Retrieve all movies from the database
@@ -9,9 +36,10 @@ Accept: {{ContentType}}
 ###
 
 ### ========== CREATE NEW MOVIE ==========
-### Create a new movie (example 1)
+### Create a new movie (example 1) - requires Admin role
 POST {{MovieManager.API_HostAddress}}/api/movies
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "The Shawshank Redemption",
@@ -23,9 +51,10 @@ Content-Type: {{ContentType}}
 
 ###
 
-### Create another movie (example 2)
+### Create another movie (example 2) - requires Admin role
 POST {{MovieManager.API_HostAddress}}/api/movies
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "Inception",
@@ -37,9 +66,10 @@ Content-Type: {{ContentType}}
 
 ###
 
-### Create third movie (example 3)
+### Create third movie (example 3) - requires Admin role
 POST {{MovieManager.API_HostAddress}}/api/movies
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "The Dark Knight",
@@ -61,9 +91,10 @@ Accept: {{ContentType}}
 ###
 
 ### ========== UPDATE MOVIE ==========
-### Update an existing movie (replace MOVIE_ID with actual UUID)
+### Update an existing movie (replace MOVIE_ID with actual UUID) - requires Admin role
 PUT {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "The Shawshank Redemption - Updated",
@@ -76,9 +107,10 @@ Content-Type: {{ContentType}}
 ###
 
 ### ========== DELETE MOVIE ==========
-### Delete a movie by ID (replace MOVIE_ID with actual UUID)
+### Delete a movie by ID (replace MOVIE_ID with actual UUID) - requires Admin role
 DELETE {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
 Accept: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 ###
 
@@ -140,9 +172,10 @@ Accept: {{ContentType}}
 
 ###
 
-### Test: Create movie with invalid data (missing required fields - should return 400)
+### Test: Create movie with invalid data (missing required fields - should return 400) - requires Admin role
 POST {{MovieManager.API_HostAddress}}/api/movies
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "",
@@ -154,9 +187,10 @@ Content-Type: {{ContentType}}
 
 ###
 
-### Test: Create movie with invalid rating (should return 400)
+### Test: Create movie with invalid rating (should return 400) - requires Admin role
 POST {{MovieManager.API_HostAddress}}/api/movies
 Content-Type: {{ContentType}}
+Authorization: Bearer {{AuthToken}}
 
 {
   "title": "Test Movie",
@@ -173,3 +207,4 @@ GET {{MovieManager.API_HostAddress}}/api/movies/search/title/
 Accept: {{ContentType}}
 
 ###
+

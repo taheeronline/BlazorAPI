@@ -26,7 +26,7 @@ namespace MovieManager.API.Services
         /// </summary>
         /// <param name="createMovieDto">The movie data to create.</param>
         /// <returns>The created movie with assigned Id.</returns>
-        Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto);
+        Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto, Guid? userId = null);
 
         /// <summary>
         /// Updates an existing movie in the database.
@@ -34,13 +34,13 @@ namespace MovieManager.API.Services
         /// <param name="id">The movie identifier to update.</param>
         /// <param name="updateMovieDto">The updated movie data.</param>
         /// <returns>The updated movie data.</returns>
-        Task<MovieDTO> UpdateMovieAsync(Guid id, UpdateMovieDTO updateMovieDto);
+        Task<MovieDTO> UpdateMovieAsync(Guid id, UpdateMovieDTO updateMovieDto, Guid? userId = null);
 
         /// <summary>
         /// Deletes a movie from the database by its identifier.
         /// </summary>
         /// <param name="id">The movie identifier to delete.</param>
-        Task DeleteMovieAsync(Guid id);
+        Task DeleteMovieAsync(Guid id, Guid? userId = null);
 
         /// <summary>
         /// Searches for movies by title (case-insensitive partial match).

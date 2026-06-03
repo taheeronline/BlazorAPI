@@ -98,7 +98,7 @@ namespace MovieManager.API.Services
         /// </summary>
         /// <param name="createMovieDto">The movie data to create.</param>
         /// <returns>The created movie with assigned Id.</returns>
-        public async Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto)
+        public async Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto, Guid? userId = null)
         {
             if (createMovieDto is null)
             {
@@ -124,6 +124,29 @@ namespace MovieManager.API.Services
 
                 _logger.LogInformation("Successfully created movie with ID: {movieId}", movie.Id);
 
+                // Record audit log if userId provided
+                if (userId.HasValue)
+                {
+                    try
+                    {
+                        var audit = new AuditLog
+                        {
+                            UserId = userId.Value,
+                            EntityType = nameof(Movie),
+                            EntityId = movie.Id,
+                            Action = "Create",
+                            ChangeDetails = System.Text.Json.JsonSerializer.Serialize(new { After = movie })
+                        };
+                        _dbContext.AuditLogs.Add(audit);
+                        await _dbContext.SaveChangesAsync();
+                        _logger.LogInformation("Audit log created for movie create (MovieId: {movieId}, AuditId: {auditId})", movie.Id, audit.Id);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to record audit log for movie create (MovieId: {movieId})", movie.Id);
+                    }
+                }
+
                 return MapMovieToDto(movie);
             }
             catch (ArgumentException ex)
@@ -144,7 +167,7 @@ namespace MovieManager.API.Services
         /// <param name="id">The movie identifier to update.</param>
         /// <param name="updateMovieDto">The updated movie data.</param>
         /// <returns>The updated movie data.</returns>
-        public async Task<MovieDTO> UpdateMovieAsync(Guid id, UpdateMovieDTO updateMovieDto)
+        public async Task<MovieDTO> UpdateMovieAsync(Guid id, UpdateMovieDTO updateMovieDto, Guid? userId = null)
         {
             if (id == Guid.Empty)
             {
@@ -204,7 +227,7 @@ namespace MovieManager.API.Services
         /// Deletes a movie from the database by its identifier.
         /// </summary>
         /// <param name="id">The movie identifier to delete.</param>
-        public async Task DeleteMovieAsync(Guid id)
+        public async Task DeleteMovieAsync(Guid id, Guid? userId = null)
         {
             if (id == Guid.Empty)
             {
