@@ -1,4 +1,6 @@
-﻿namespace MovieManager.Web.DTOs
+﻿using System;
+
+namespace MovieManager.Web.DTOs
 {
     /// <summary>
     /// Data Transfer Object for Movie entity.
@@ -45,5 +47,15 @@
         /// Timestamp when the record was last modified.
         /// </summary>
         public DateTimeOffset LastModified { get; set; }
+
+        /// <summary>
+        /// Unique identifier of the user who created the record.
+        /// </summary>
+        public Guid CreatedBy { get; set; }
+
+        /// <summary>
+        /// Unique identifier of the user who last modified the record.
+        /// </summary>
+        public Guid? ModifiedBy { get; set; }
     }
 }

@@ -1,4 +1,3 @@
 <Solution>
   <Project Path="MovieManager.API/MovieManager.API.csproj" />
-  <Project Path="MovieManager.Web/MovieManager.Web.csproj" Id="712438d1-6823-4dba-ad6c-62cdd49f7529" />
 </Solution>

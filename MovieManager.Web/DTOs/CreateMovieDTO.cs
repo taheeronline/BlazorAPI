@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace MovieManager.Web.DTOs
 {
@@ -41,5 +42,11 @@ namespace MovieManager.Web.DTOs
         [Required(ErrorMessage = "Movie rating is required.")]
         [Range(0, 10, ErrorMessage = "Rating must be between 0 and 10.")]
         public double Rating { get; set; }
+
+        /// <summary>
+        /// Unique identifier of the user creating the record (required).
+        /// </summary>
+        [Required(ErrorMessage = "CreatedBy identifier is required.")]
+        public Guid CreatedBy { get; set; }
     }
 }

@@ -19,14 +19,14 @@ namespace MovieManager.API.Services
         /// </summary>
         /// <param name="id">The movie identifier.</param>
         /// <returns>Movie data if found. Throws MovieNotFoundException (404) if not found.</returns>
-        Task<MovieDTO> GetMovieByIdAsync(Guid id);
+        Task<MovieDTO> GetMovieByIdAsync(int id);
 
         /// <summary>
         /// Creates a new movie in the database.
         /// </summary>
         /// <param name="createMovieDto">The movie data to create.</param>
         /// <returns>The created movie with assigned Id.</returns>
-        Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto, Guid? userId = null);
+        Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto);
 
         /// <summary>
         /// Updates an existing movie in the database.
@@ -34,13 +34,13 @@ namespace MovieManager.API.Services
         /// <param name="id">The movie identifier to update.</param>
         /// <param name="updateMovieDto">The updated movie data.</param>
         /// <returns>The updated movie data.</returns>
-        Task<MovieDTO> UpdateMovieAsync(Guid id, UpdateMovieDTO updateMovieDto, Guid? userId = null);
+        Task<MovieDTO> UpdateMovieAsync(int id, UpdateMovieDTO updateMovieDto);
 
         /// <summary>
-        /// Deletes a movie from the database by its identifier.
+        /// Deletes a movie from the database by its identifier (Soft Delete).
         /// </summary>
         /// <param name="id">The movie identifier to delete.</param>
-        Task DeleteMovieAsync(Guid id, Guid? userId = null);
+        Task DeleteMovieAsync(int id);
 
         /// <summary>
         /// Searches for movies by title (case-insensitive partial match).

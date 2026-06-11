@@ -9,7 +9,7 @@ namespace MovieManager.API.Exceptions
         /// Initializes a new instance of the MovieNotFoundException class.
         /// </summary>
         /// <param name="movieId">The ID of the movie that was not found.</param>
-        public MovieNotFoundException(Guid movieId)
+        public MovieNotFoundException(int movieId)
             : base($"Movie with ID '{movieId}' was not found. Please verify the ID and try again.", 404)
         {
         }

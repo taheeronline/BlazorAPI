@@ -1,9 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using MovieManager.API.DTOs;
 using MovieManager.API.Services;
-using MovieManager.API.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace MovieManager.API.Controllers
 {
@@ -18,19 +15,16 @@ namespace MovieManager.API.Controllers
     {
         private readonly iMovieService _movieService;
         private readonly ILogger<MoviesController> _logger;
-        private readonly MovieDbContext _dbContext;
 
         /// <summary>
         /// Initializes a new instance of the MoviesController class.
         /// </summary>
         /// <param name="movieService">The movie service for handling business logic.</param>
         /// <param name="logger">Logger for recording controller actions.</param>
-        /// <param name="dbContext">Database context for accessing audit logs.</param>
-        public MoviesController(iMovieService movieService, ILogger<MoviesController> logger, MovieDbContext dbContext)
+        public MoviesController(iMovieService movieService, ILogger<MoviesController> logger)
         {
             _movieService = movieService ?? throw new ArgumentNullException(nameof(movieService));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-            _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         }
 
         /// <summary>
@@ -64,7 +58,7 @@ namespace MovieManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<MovieDTO>> GetMovieById(Guid id)
+        public async Task<ActionResult<MovieDTO>> GetMovieById(int id)
         {
             _logger.LogInformation("GET request: Retrieve movie with ID {movieId}", id);
 
@@ -74,37 +68,26 @@ namespace MovieManager.API.Controllers
 
         /// <summary>
         /// Creates a new movie in the database.
-        /// Requires authentication.
         /// </summary>
         /// <param name="createMovieDto">The movie data to create.</param>
         /// <returns>The created movie with its assigned ID.</returns>
         /// <response code="201">Movie successfully created.</response>
         /// <response code="400">Invalid movie data provided.</response>
-        /// <response code="401">Unauthorized - authentication required.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPost]
-        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(MovieDTO), StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<MovieDTO>> CreateMovie([FromBody] CreateMovieDTO createMovieDto)
         {
-            _logger.LogInformation("POST request: Create new movie by {user}", User?.Identity?.Name ?? "Unknown");
+            _logger.LogInformation("POST request: Create new movie");
 
-            // Attempt to get user id from claims for audit logging
-            Guid? userId = null;
-            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
-
-            var createdMovie = await _movieService.CreateMovieAsync(createMovieDto, userId);
+            var createdMovie = await _movieService.CreateMovieAsync(createMovieDto);
             return CreatedAtAction(nameof(GetMovieById), new { id = createdMovie.Id }, createdMovie);
         }
 
         /// <summary>
         /// Updates an existing movie in the database.
-        /// Requires authentication.
         /// </summary>
         /// <param name="id">The unique identifier of the movie to update.</param>
         /// <param name="updateMovieDto">The updated movie data.</param>
@@ -112,59 +95,39 @@ namespace MovieManager.API.Controllers
         /// <response code="200">Movie successfully updated.</response>
         /// <response code="400">Invalid movie data provided.</response>
         /// <response code="404">Movie not found.</response>
-        /// <response code="401">Unauthorized - authentication required.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
         [ProducesResponseType(typeof(MovieDTO), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<MovieDTO>> UpdateMovie(Guid id, [FromBody] UpdateMovieDTO updateMovieDto)
+        public async Task<ActionResult<MovieDTO>> UpdateMovie(int id, [FromBody] UpdateMovieDTO updateMovieDto)
         {
-            _logger.LogInformation("PUT request: Update movie with ID {movieId} by {user}", id, User?.Identity?.Name ?? "Unknown");
+            _logger.LogInformation("PUT request: Update movie with ID {movieId}", id);
 
-            // Extract user id for audit logging
-            Guid? userId = null;
-            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
-
-            var updatedMovie = await _movieService.UpdateMovieAsync(id, updateMovieDto, userId);
+            var updatedMovie = await _movieService.UpdateMovieAsync(id, updateMovieDto);
             return Ok(updatedMovie);
         }
 
         /// <summary>
         /// Deletes a movie from the database.
-        /// Requires Admin role.
         /// </summary>
         /// <param name="id">The unique identifier of the movie to delete.</param>
         /// <returns>No content response on successful deletion.</returns>
         /// <response code="204">Movie successfully deleted.</response>
         /// <response code="404">Movie not found.</response>
         /// <response code="400">Invalid movie ID provided.</response>
-        /// <response code="401">Unauthorized - authentication required.</response>
-        /// <response code="403">Forbidden - Admin role required.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteMovie(Guid id)
+        public async Task<IActionResult> DeleteMovie(int id)
         {
-            _logger.LogInformation("DELETE request: Delete movie with ID {movieId} by {user}", id, User?.Identity?.Name ?? "Unknown");
+            _logger.LogInformation("DELETE request: Delete movie with ID {movieId}", id);
 
-            // Extract user id for audit logging
-            Guid? userId = null;
-            var userIdClaim = User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            if (Guid.TryParse(userIdClaim, out var parsedUserId)) userId = parsedUserId;
-
-            await _movieService.DeleteMovieAsync(id, userId);
+            await _movieService.DeleteMovieAsync(id);
             return NoContent();
         }
 
@@ -226,61 +189,6 @@ namespace MovieManager.API.Controllers
 
             var movies = await _movieService.SearchMoviesByGenreAsync(genre);
             return Ok(movies);
-        }
-
-        /// <summary>
-        /// Gets audit logs for a specific movie.
-        /// Available to all authenticated users.
-        /// </summary>
-        /// <param name="movieId">The unique identifier of the movie.</param>
-        /// <returns>A collection of audit log entries for the movie.</returns>
-        /// <response code="200">Returns the audit logs for the movie.</response>
-        /// <response code="404">Movie not found.</response>
-        /// <response code="401">Unauthorized - authentication required.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpGet("{movieId}/auditlogs")]
-        [Authorize]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> GetMovieAuditLogs(Guid movieId)
-        {
-            _logger.LogInformation("GET request: Retrieve audit logs for movie {movieId}", movieId);
-
-            try
-            {
-                // Verify movie exists
-                var movieExists = await _dbContext.Movies.AnyAsync(m => m.Id == movieId);
-                if (!movieExists)
-                {
-                    return NotFound(new { message = "Movie not found" });
-                }
-
-                var auditLogs = await _dbContext.AuditLogs
-                    .Where(al => al.EntityId == movieId && al.EntityType == "Movie")
-                    .Include(al => al.User)
-                    .Select(al => new
-                    {
-                        al.Id,
-                        al.UserId,
-                        Username = al.User!.Username,
-                        al.EntityType,
-                        al.EntityId,
-                        al.Action,
-                        al.ChangeDetails,
-                        CreatedAt = al.Created
-                    })
-                    .OrderByDescending(al => al.CreatedAt)
-                    .ToListAsync();
-
-                return Ok(auditLogs);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error fetching audit logs for movie {movieId}", movieId);
-                return StatusCode(500, new { message = "An error occurred while fetching audit logs" });
-            }
         }
     }
 }

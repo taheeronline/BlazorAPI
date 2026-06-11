@@ -1,14 +1,22 @@
 ﻿namespace MovieManager.API.Models
 {
-    public class EntityBase
+    public abstract class EntityBase
     {
-        public Guid Id { get; set; }= Guid.NewGuid();
-        public DateTimeOffset Created { get; set; }= DateTimeOffset.Now;
-        public DateTimeOffset LastModified { get; set; } = DateTimeOffset.UtcNow;
+        public int Id { get; protected set; }
 
-        public void UpdateLastModified()
+        public DateTime CreatedDate { get; protected set; }
+        public DateTime? ModifiedDate { get; protected set; }
+        public bool IsDeleted { get; protected set; }
+
+        public void MarkAsDeleted()
         {
-            LastModified = DateTimeOffset.UtcNow;
+            IsDeleted = true;
+            UpdateLastModified();
+        }
+
+        protected void UpdateLastModified()
+        {
+            ModifiedDate = DateTime.UtcNow;
         }
     }
 }

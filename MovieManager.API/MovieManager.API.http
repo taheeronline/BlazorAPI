@@ -1,210 +1,75 @@
+# Ensure you update the port number to match your running application's port
 @MovieManager.API_HostAddress = http://localhost:5212
-@ContentType = application/json
-# After successful login, set @AuthToken to the received token (e.g. Authorization: Bearer <token>)
+@MovieId = 1
 
-### ========== CREATE USER (REGISTER) ==========
-### Create a new user account with username "Huzair"
-POST {{MovieManager.API_HostAddress}}/api/auth/register
-Content-Type: {{ContentType}}
-
-{
-  "username": "shams",
-  "email": "shams@example.com",
-  "password": "Shams@123",
-  "role":"Admin"
-}
-
-###
-
-### ========== LOGIN (get JWT) ==========
-### Login as demo user (admin or user) to receive JWT token
-POST {{MovieManager.API_HostAddress}}/api/auth/login
-Content-Type: {{ContentType}}
-
-{
-  "username": "admin",
-  "password": "Admin@123"
-}
-
-###
-
-### ========== GET ALL MOVIES ==========
-### Retrieve all movies from the database
+### 1. Get all movies
 GET {{MovieManager.API_HostAddress}}/api/movies
-Accept: {{ContentType}}
+Accept: application/json
 
 ###
 
-### ========== CREATE NEW MOVIE ==========
-### Create a new movie (example 1) - requires Admin role
+### 2. Create a new movie
 POST {{MovieManager.API_HostAddress}}/api/movies
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
-
-{
-  "title": "The Shawshank Redemption",
-  "director": "Frank Darabont",
-  "genre": "Drama",
-  "releaseDate": "1994-10-14T00:00:00Z",
-  "rating": 9.3
-}
-
-###
-
-### Create another movie (example 2) - requires Admin role
-POST {{MovieManager.API_HostAddress}}/api/movies
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
+Content-Type: application/json
+Accept: application/json
 
 {
   "title": "Inception",
   "director": "Christopher Nolan",
-  "genre": "Science Fiction",
+  "genre": "Sci-Fi",
   "releaseDate": "2010-07-16T00:00:00Z",
   "rating": 8.8
 }
 
 ###
 
-### Create third movie (example 3) - requires Admin role
-POST {{MovieManager.API_HostAddress}}/api/movies
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
+### 3. Get a specific movie by ID
+GET {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
+Accept: application/json
+
+###
+
+### 4. Update an existing movie
+PUT {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
+Content-Type: application/json
+Accept: application/json
 
 {
-  "title": "The Dark Knight",
+  "title": "Inception: Extended Edition",
   "director": "Christopher Nolan",
-  "genre": "Action",
-  "releaseDate": "2008-07-18T00:00:00Z",
-  "rating": 9.0
+  "genre": "Sci-Fi",
+  "releaseDate": "2010-07-16T00:00:00Z",
+  "rating": 9.5
 }
 
 ###
 
-### ========== GET MOVIE BY ID ==========
-### Retrieve a specific movie by ID (replace MOVIE_ID with actual UUID)
-@movieId = 00000000-0000-0000-0000-000000000000
-
-GET {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
-Accept: {{ContentType}}
-
-###
-
-### ========== UPDATE MOVIE ==========
-### Update an existing movie (replace MOVIE_ID with actual UUID) - requires Admin role
-PUT {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
-
-{
-  "title": "The Shawshank Redemption - Updated",
-  "director": "Frank Darabont",
-  "genre": "Drama",
-  "releaseDate": "1994-10-14T00:00:00Z",
-  "rating": 9.4
-}
-
-###
-
-### ========== DELETE MOVIE ==========
-### Delete a movie by ID (replace MOVIE_ID with actual UUID) - requires Admin role
-DELETE {{MovieManager.API_HostAddress}}/api/movies/{{movieId}}
-Accept: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
-
-###
-
-### ========== SEARCH BY TITLE ==========
-### Search movies by title (case-insensitive partial match)
-GET {{MovieManager.API_HostAddress}}/api/movies/search/title/Shawshank
-Accept: {{ContentType}}
-
-###
-
-### Search for "Inception"
+### 5. Search movies by title
 GET {{MovieManager.API_HostAddress}}/api/movies/search/title/Inception
-Accept: {{ContentType}}
+Accept: application/json
 
 ###
 
-### Search for movies with "the" in title
-GET {{MovieManager.API_HostAddress}}/api/movies/search/title/the
-Accept: {{ContentType}}
+### 6. Search movies by director
+GET {{MovieManager.API_HostAddress}}/api/movies/search/director/Nolan
+Accept: application/json
 
 ###
 
-### ========== SEARCH BY DIRECTOR ==========
-### Search movies by director name (case-insensitive partial match)
-GET {{MovieManager.API_HostAddress}}/api/movies/search/director/Christopher%20Nolan
-Accept: {{ContentType}}
+### 7. Search movies by genre
+GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Sci-Fi
+Accept: application/json
 
 ###
 
-### Search for "Frank Darabont"
-GET {{MovieManager.API_HostAddress}}/api/movies/search/director/Frank%20Darabont
-Accept: {{ContentType}}
+### 8. Delete a movie (Soft Delete)
+DELETE {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
+Accept: */*
 
 ###
 
-### ========== SEARCH BY GENRE ==========
-### Search movies by genre (case-insensitive partial match)
-GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Drama
-Accept: {{ContentType}}
+### 9. Verify deletion (Should return 404 Not Found due to Query Filter)
+GET {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
+Accept: application/json
 
 ###
-
-### Search for action movies
-GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Action
-Accept: {{ContentType}}
-
-###
-
-### Search for sci-fi movies
-GET {{MovieManager.API_HostAddress}}/api/movies/search/genre/Science%20Fiction
-Accept: {{ContentType}}
-
-###
-
-### ========== ERROR TESTING ==========
-### Test: Get non-existent movie (should return 404)
-GET {{MovieManager.API_HostAddress}}/api/movies/ffffffff-ffff-ffff-ffff-ffffffffffff
-Accept: {{ContentType}}
-
-###
-
-### Test: Create movie with invalid data (missing required fields - should return 400) - requires Admin role
-POST {{MovieManager.API_HostAddress}}/api/movies
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
-
-{
-  "title": "",
-  "director": "",
-  "genre": "Drama",
-  "releaseDate": "1994-10-14T00:00:00Z",
-  "rating": 9.3
-}
-
-###
-
-### Test: Create movie with invalid rating (should return 400) - requires Admin role
-POST {{MovieManager.API_HostAddress}}/api/movies
-Content-Type: {{ContentType}}
-Authorization: Bearer {{AuthToken}}
-
-{
-  "title": "Test Movie",
-  "director": "Test Director",
-  "genre": "Drama",
-  "releaseDate": "1994-10-14T00:00:00Z",
-  "rating": 15
-}
-
-###
-
-### Test: Search with empty title (should return 400)
-GET {{MovieManager.API_HostAddress}}/api/movies/search/title/
-Accept: {{ContentType}}
-
-###
-
