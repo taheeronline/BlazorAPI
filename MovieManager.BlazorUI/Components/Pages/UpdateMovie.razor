@@ -1,0 +1,133 @@
+﻿@page "/movies/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject iMovieService MovieService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Movie</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-pencil-square"></i> Edit Movie</h2>
+        <p class="text-muted">Update the details for this movie below.</p>
+    </div>
+
+    @if (editMovie == null)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0" style="max-width: 800px;">
+            <div class="card-body p-4">
+
+                <EditForm Model="editMovie" OnValidSubmit="HandleValidSubmit" FormName="EditMovieForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="title" class="form-label fw-bold">Title</label>
+                            <InputText id="title" class="form-control" @bind-Value="editMovie.Title" />
+                            <ValidationMessage For="() => editMovie.Title" class="text-danger small" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="director" class="form-label fw-bold">Director</label>
+                            <InputText id="director" class="form-control" @bind-Value="editMovie.Director" />
+                            <ValidationMessage For="() => editMovie.Director" class="text-danger small" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="genre" class="form-label fw-bold">Genre</label>
+                            <InputText id="genre" class="form-control" @bind-Value="editMovie.Genre" />
+                            <ValidationMessage For="() => editMovie.Genre" class="text-danger small" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="releaseDate" class="form-label fw-bold">Release Date</label>
+                            <InputDate id="releaseDate" class="form-control" @bind-Value="editMovie.ReleaseDate" />
+                            <ValidationMessage For="() => editMovie.ReleaseDate" class="text-danger small" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="rating" class="form-label fw-bold">Rating (0 - 10)</label>
+                            <InputNumber id="rating" class="form-control" @bind-Value="editMovie.Rating" step="0.1" min="0" max="10" />
+                            <ValidationMessage For="() => editMovie.Rating" class="text-danger small" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                            <i class="bi bi-save"></i> Update Movie
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="NavigateBack">
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    // Captures the {Id} from the URL route
+    [Parameter]
+    public int Id { get; set; }
+
+    // Our model for the form
+    private UpdateMovieDTO? editMovie;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the existing movie from the API
+        var existingMovie = await MovieService.GetById(Id);
+
+        if (existingMovie != null)
+        {
+            // Map the fetched MovieDTO to your UpdateMovieDTO so the form can bind to it
+            editMovie = new UpdateMovieDTO
+            {
+                Title = existingMovie.Title,
+                Director = existingMovie.Director,
+                Genre = existingMovie.Genre,
+                ReleaseDate = existingMovie.ReleaseDate,
+                Rating = existingMovie.Rating
+            };
+        }
+        else
+        {
+            // If the API returns null (movie not found), redirect back to the list
+            NavigationManager.NavigateTo("/movies");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        try
+        {
+            if (editMovie != null)
+            {
+                await MovieService.UpdateMovie(Id, editMovie);
+                NavigationManager.NavigateTo("/movies");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating movie: {ex.Message}");
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/movies");
+    }
+}

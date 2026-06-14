@@ -1,5 +1,6 @@
-using MovieManager.Web.Components;
-using MovieManager.Web.Services;
+using MovieManager.BlazorUI.Components;
+using MovieManager.BlazorUI.Services.Implementation;
+using MovieManager.BlazorUI.Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,10 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register the targeted HTTP Client
-builder.Services.AddHttpClient<iMovieApiService, MovieApiService>(client =>
+
+builder.Services.AddHttpClient<iMovieService, MovieService>(client =>
 {
-    // Update this URI to match your API's launchSettings.json applicationUrl
+    // Set your actual API base address here
     client.BaseAddress = new Uri("http://localhost:5212/");
 });
 

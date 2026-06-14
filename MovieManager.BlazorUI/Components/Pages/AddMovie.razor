@@ -1,0 +1,93 @@
+﻿@page "/movies/add"
+@rendermode InteractiveServer
+@inject iMovieService MovieService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Add New Movie</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-plus-circle"></i> Add New Movie</h2>
+        <p class="text-muted">Enter the details below to add a new movie to the directory.</p>
+    </div>
+
+    <div class="card shadow-sm border-0" style="max-width: 800px;">
+        <div class="card-body p-4">
+
+            @* The EditForm binds to our newMovie model *@
+            <EditForm Model="newMovie" OnValidSubmit="HandleValidSubmit" FormName="AddMovieForm">
+                @* Enables validation based on [Required], [StringLength], etc. in your DTO *@
+                <DataAnnotationsValidator />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="title" class="form-label fw-bold">Title</label>
+                        <InputText id="title" class="form-control" @bind-Value="newMovie.Title" placeholder="e.g., Inception" />
+                        <ValidationMessage For="() => newMovie.Title" class="text-danger small" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="director" class="form-label fw-bold">Director</label>
+                        <InputText id="director" class="form-control" @bind-Value="newMovie.Director" placeholder="e.g., Christopher Nolan" />
+                        <ValidationMessage For="() => newMovie.Director" class="text-danger small" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="genre" class="form-label fw-bold">Genre</label>
+                        <InputText id="genre" class="form-control" @bind-Value="newMovie.Genre" placeholder="e.g., Sci-Fi" />
+                        <ValidationMessage For="() => newMovie.Genre" class="text-danger small" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="releaseDate" class="form-label fw-bold">Release Date</label>
+                        <InputDate id="releaseDate" class="form-control" @bind-Value="newMovie.ReleaseDate" />
+                        <ValidationMessage For="() => newMovie.ReleaseDate" class="text-danger small" />
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <label for="rating" class="form-label fw-bold">Rating (0 - 10)</label>
+                        <InputNumber id="rating" class="form-control" @bind-Value="newMovie.Rating" step="0.1" min="0" max="10" />
+                        <ValidationMessage For="() => newMovie.Rating" class="text-danger small" />
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                        <i class="bi bi-save"></i> Save Movie
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-4" @onclick="NavigateBack">
+                        Cancel
+                    </button>
+                </div>
+            </EditForm>
+
+        </div>
+    </div>
+</div>
+
+@code {
+    // Initialize a blank DTO. Defaulting the date to today is a nice UX touch.
+    private CreateMovieDTO newMovie = new CreateMovieDTO
+    {
+        ReleaseDate = DateTimeOffset.Now
+    };
+
+    private async Task HandleValidSubmit()
+    {
+        // Call your API service to save the data
+        await MovieService.CreateMovie(newMovie);
+
+        // Once saved successfully, redirect back to the movie list
+        NavigationManager.NavigateTo("/movies");
+    }
+
+    private void NavigateBack()
+    {
+        // Redirect back without saving
+        NavigationManager.NavigateTo("/movies");
+    }
+}

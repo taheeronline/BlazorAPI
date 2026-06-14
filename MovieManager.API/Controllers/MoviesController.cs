@@ -45,28 +45,6 @@ namespace MovieManager.API.Controllers
         }
 
         /// <summary>
-        /// Gets a specific movie by its ID.
-        /// </summary>
-        /// <param name="id">The unique identifier of the movie.</param>
-        /// <returns>The movie with the specified ID.</returns>
-        /// <response code="200">Returns the requested movie.</response>
-        /// <response code="404">Movie not found.</response>
-        /// <response code="400">Invalid movie ID provided.</response>
-        /// <response code="500">Internal server error occurred.</response>
-        [HttpGet("{id}")]
-        [ProducesResponseType(typeof(MovieDTO), StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<MovieDTO>> GetMovieById(int id)
-        {
-            _logger.LogInformation("GET request: Retrieve movie with ID {movieId}", id);
-
-            var movie = await _movieService.GetMovieByIdAsync(id);
-            return Ok(movie);
-        }
-
-        /// <summary>
         /// Creates a new movie in the database.
         /// </summary>
         /// <param name="createMovieDto">The movie data to create.</param>
@@ -129,6 +107,28 @@ namespace MovieManager.API.Controllers
 
             await _movieService.DeleteMovieAsync(id);
             return NoContent();
+        }
+
+        /// <summary>
+        /// Gets a specific movie by its ID.
+        /// </summary>
+        /// <param name="id">The unique identifier of the movie.</param>
+        /// <returns>The movie with the specified ID.</returns>
+        /// <response code="200">Returns the requested movie.</response>
+        /// <response code="404">Movie not found.</response>
+        /// <response code="400">Invalid movie ID provided.</response>
+        /// <response code="500">Internal server error occurred.</response>
+        [HttpGet("{id}")]
+        [ProducesResponseType(typeof(MovieDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<MovieDTO>> GetMovieById(int id)
+        {
+            _logger.LogInformation("GET request: Retrieve movie with ID {movieId}", id);
+
+            var movie = await _movieService.GetMovieByIdAsync(id);
+            return Ok(movie);
         }
 
         /// <summary>

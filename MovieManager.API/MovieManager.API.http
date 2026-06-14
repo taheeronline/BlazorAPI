@@ -14,14 +14,13 @@ Content-Type: application/json
 Accept: application/json
 
 {
-  "title": "Inception",
+  "title": "Interstellar",
   "director": "Christopher Nolan",
   "genre": "Sci-Fi",
-  "releaseDate": "2010-07-16T00:00:00Z",
-  "rating": 8.8
+  "releaseDate": "2014-11-07T00:00:00Z",
+  "rating": 8.7
 }
 
-###
 
 ### 3. Get a specific movie by ID
 GET {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
@@ -34,13 +33,7 @@ PUT {{MovieManager.API_HostAddress}}/api/movies/{{MovieId}}
 Content-Type: application/json
 Accept: application/json
 
-{
-  "title": "Inception: Extended Edition",
-  "director": "Christopher Nolan",
-  "genre": "Sci-Fi",
-  "releaseDate": "2010-07-16T00:00:00Z",
-  "rating": 9.5
-}
+c  vx5
 
 ###
 
