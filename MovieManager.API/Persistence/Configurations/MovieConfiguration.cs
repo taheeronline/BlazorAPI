@@ -31,14 +31,14 @@ namespace MovieManager.API.Persistence.Configurations
             builder.HasOne(m => m.CreatedByUser)
                    .WithMany()
                    .HasForeignKey(m => m.CreatedBy)
-                   .IsRequired()
+                   .IsRequired(false)
                    .OnDelete(DeleteBehavior.Restrict);
 
             // 2. ModifiedBy Relationship
             builder.HasOne(m => m.ModifiedByUser)
                    .WithMany()
                    .HasForeignKey(m => m.ModifiedBy)
-                   .IsRequired()
+                   .IsRequired(false)
                    .OnDelete(DeleteBehavior.Restrict);
 
         }

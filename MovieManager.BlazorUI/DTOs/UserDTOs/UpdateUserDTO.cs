@@ -18,5 +18,7 @@ namespace MovieManager.BlazorUI.DTOs.UserDTOs
 
         [Required(ErrorMessage = "Role is required.")]
         public string Role { get; set; } = string.Empty;
+
+        public int ModifiedBy { get; set; }
     }
 }

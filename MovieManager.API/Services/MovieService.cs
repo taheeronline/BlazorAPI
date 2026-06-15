@@ -69,7 +69,7 @@ namespace MovieManager.API.Services
                     createMovieDto.Genre,
                     createMovieDto.ReleaseDate,
                     createMovieDto.Rating,
-                    userId: 1 // In a real application, this would come from the authenticated user context
+                    createMovieDto.CreatedBy // In a real application, this would come from the authenticated user context
                 );
 
                 _dbContext.Movies.Add(movie);
@@ -105,7 +105,7 @@ namespace MovieManager.API.Services
                     updateMovieDto.Genre,
                     updateMovieDto.ReleaseDate,
                     updateMovieDto.Rating,
-                    userId: 1 // In a real application, this would come from the authenticated user context
+                    updateMovieDto.ModifiedBy // In a real application, this would come from the authenticated user context
                 );
 
                 await _dbContext.SaveChangesAsync();
@@ -124,9 +124,10 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task DeleteMovie(int id)
+        public async Task DeleteMovie(int id, int modifiedById)
         {
             if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
+            if (modifiedById <= 0) throw new MovieValidationException("ModifiedBy ID must be greater than zero.");
 
             try
             {
@@ -134,7 +135,9 @@ namespace MovieManager.API.Services
 
                 if (movie is null) throw new MovieNotFoundException(id);
 
-                movie.MarkAsDeleted();
+                // Pass the user ID into your domain method
+                movie.MarkAsDeleted(modifiedById);
+
                 await _dbContext.SaveChangesAsync();
             }
             catch (MovieNotFoundException) { throw; }
@@ -144,7 +147,7 @@ namespace MovieManager.API.Services
                 throw new MovieManagerException("Failed to delete movie.", 500);
             }
         }
-
+        
         public async Task<IEnumerable<MovieDTO>> GetByTitle(string title)
         {
             if (string.IsNullOrWhiteSpace(title)) throw new MovieValidationException("Search title cannot be empty.");

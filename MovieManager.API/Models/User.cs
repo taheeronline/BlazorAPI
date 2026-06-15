@@ -19,7 +19,7 @@
             Role = string.Empty;
         }
 
-        private User(string name, string userName, string email, string password, string hashPassword, string role)
+        private User(string name, string userName, string email, string password, string hashPassword, string role, int createdBy)
         {
             Name = name;
             UserName = userName;
@@ -27,13 +27,14 @@
             Password = password;
             HashPassword = hashPassword;
             Role = role;
+            CreatedBy = createdBy;
         }
 
-        public static User Create(string name, string userName, string email, string password, string hashPassword, string role)
+        public static User Create(string name, string userName, string email, string password, string hashPassword, string role, int createdBy)
         {
             ValidateInputs(name, userName, email, password, hashPassword, role);
 
-            var user = new User(name, userName, email, password, hashPassword, role)
+            var user = new User(name, userName, email, password, hashPassword, role, createdBy)
             {
                 CreatedDate = DateTime.UtcNow,
                 IsDeleted = false
@@ -42,7 +43,7 @@
             return user;
         }
 
-        public void Update(string name, string userName, string email, string role)
+        public void Update(string name, string userName, string email, string role, int modifiedBy)
         {
             ValidateInputs(name, userName, email, role);
             if (Id <= 0) throw new ArgumentException("Invalid User ID.", nameof(Id));
@@ -51,6 +52,7 @@
             this.UserName = userName;
             this.Email = email;
             this.Role = role;
+            this.ModifiedBy = modifiedBy;
         }
 
         private static void ValidateInputs(string name, string userName, string email, string role)

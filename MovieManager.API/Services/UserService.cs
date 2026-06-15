@@ -49,7 +49,8 @@ namespace MovieManager.API.Services
                 createDTO.Email,
                 createDTO.Password,
                 hashedPassword,
-                createDTO.Role);
+                createDTO.Role,
+                createDTO.CreatedBy);
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -65,12 +66,12 @@ namespace MovieManager.API.Services
                 throw new KeyNotFoundException($"User with ID {id} not found.");
             }
 
-            user.Update(updateDTO.Name, updateDTO.UserName, updateDTO.Email, updateDTO.Role);
+            user.Update(updateDTO.Name, updateDTO.UserName, updateDTO.Email, updateDTO.Role, updateDTO.ModifiedBy);
 
             await _context.SaveChangesAsync();
         }
 
-        public async Task DeleteUser(int id)
+        public async Task DeleteUser(int id, int modifiedById)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
@@ -78,7 +79,7 @@ namespace MovieManager.API.Services
                 throw new KeyNotFoundException($"User with ID {id} not found.");
             }
 
-            _context.Users.Remove(user);
+            user.MarkAsDeleted(modifiedById);
             await _context.SaveChangesAsync();
         }
 

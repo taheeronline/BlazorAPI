@@ -1,5 +1,6 @@
 ﻿@page "/movies/edit/{Id:int}"
 @rendermode InteractiveServer
+@using System.Security.Claims
 @inject iMovieService MovieService
 @inject NavigationManager NavigationManager
 
@@ -79,21 +80,20 @@
 </div>
 
 @code {
-    // Captures the {Id} from the URL route
     [Parameter]
     public int Id { get; set; }
 
-    // Our model for the form
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private UpdateMovieDTO? editMovie;
 
     protected override async Task OnInitializedAsync()
     {
-        // Fetch the existing movie from the API
         var existingMovie = await MovieService.GetById(Id);
 
         if (existingMovie != null)
         {
-            // Map the fetched MovieDTO to your UpdateMovieDTO so the form can bind to it
             editMovie = new UpdateMovieDTO
             {
                 Title = existingMovie.Title,
@@ -105,7 +105,6 @@
         }
         else
         {
-            // If the API returns null (movie not found), redirect back to the list
             NavigationManager.NavigateTo("/movies");
         }
     }
@@ -114,8 +113,21 @@
     {
         try
         {
-            if (editMovie != null)
+            if (editMovie != null && AuthStateTask != null)
             {
+                var authState = await AuthStateTask;
+                var user = authState.User;
+
+                if (user.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    if (int.TryParse(userIdString, out int userId))
+                    {
+                        editMovie.ModifiedBy = userId;
+                    }
+                }
+
                 await MovieService.UpdateMovie(Id, editMovie);
                 NavigationManager.NavigateTo("/movies");
             }

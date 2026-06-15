@@ -70,7 +70,10 @@
 </div>
 
 @code {
-    // Initialize a blank DTO. Defaulting the date to today is a nice UX touch.
+    // 1. Add the Cascading Parameter to get the user's session data
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private CreateMovieDTO newMovie = new CreateMovieDTO
     {
         ReleaseDate = DateTimeOffset.Now
@@ -78,6 +81,25 @@
 
     private async Task HandleValidSubmit()
     {
+        // 2. Extract the user before sending to the API
+        if (AuthStateTask != null)
+        {
+            var authState = await AuthStateTask;
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                // Find the ID we stored in CustomAuthStateProvider
+                var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (int.TryParse(userIdString, out int userId))
+                {
+                    // 3. Assign the ID to your DTO (ensure your DTO has this property!)
+                    newMovie.CreatedBy = userId;
+                }
+            }
+        }
+
         // Call your API service to save the data
         await MovieService.CreateMovie(newMovie);
 
@@ -87,7 +109,6 @@
 
     private void NavigateBack()
     {
-        // Redirect back without saving
         NavigationManager.NavigateTo("/movies");
     }
 }

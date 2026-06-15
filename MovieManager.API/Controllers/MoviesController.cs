@@ -101,11 +101,11 @@ namespace MovieManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteMovie(int id)
+        public async Task<IActionResult> DeleteMovie(int id, int modifiedById)
         {
             _logger.LogInformation("DELETE request: Delete movie with ID {movieId}", id);
 
-            await _movieService.DeleteMovie(id);
+            await _movieService.DeleteMovie(id, modifiedById);
             return NoContent();
         }
 

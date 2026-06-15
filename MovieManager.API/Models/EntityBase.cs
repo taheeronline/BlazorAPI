@@ -8,9 +8,13 @@
         public DateTime? ModifiedDate { get; protected set; }
         public bool IsDeleted { get; protected set; }
 
-        public void MarkAsDeleted()
+        public int? CreatedBy { get; protected set; }
+        public int? ModifiedBy { get; protected set; }
+
+        public void MarkAsDeleted(int modifiedById)
         {
             IsDeleted = true;
+            ModifiedBy = modifiedById;
             UpdateLastModified();
         }
 

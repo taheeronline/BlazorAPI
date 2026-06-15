@@ -104,9 +104,10 @@
 <br />
 
 @code {
-    private IEnumerable<MovieDTO>? movies;
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
 
-    // State variables for the search bar
+    private IEnumerable<MovieDTO>? movies;
     private string searchType = "Title";
     private string searchTerm = string.Empty;
 
@@ -115,13 +116,11 @@
         await LoadMovies();
     }
 
-    // Extracted this into a reusable method
     private async Task LoadMovies()
     {
         movies = await MovieService.GetAll();
     }
 
-    // Logic to handle the API calls based on the selected dropdown
     private async Task SearchMovies()
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
@@ -130,7 +129,6 @@
             return;
         }
 
-        // Set to null to trigger the loading spinner during the search
         movies = null;
 
         try
@@ -152,19 +150,17 @@
         catch (Exception ex)
         {
             Console.WriteLine($"Search error: {ex.Message}");
-            movies = Enumerable.Empty<MovieDTO>(); // Prevent infinite loading state on error
+            movies = Enumerable.Empty<MovieDTO>();
         }
     }
 
-    // Clears the text box and resets the grid
     private async Task ClearSearch()
     {
         searchTerm = string.Empty;
-        movies = null; // Show spinner
+        movies = null;
         await LoadMovies();
     }
 
-    // Allows pressing "Enter" in the textbox to trigger the search
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
@@ -191,9 +187,24 @@
         {
             try
             {
-                await MovieService.DeleteMovie(movie.Id);
+                int modifiedById = 0;
 
-                // If they delete while searching, re-run the search instead of loading all
+                // Extract the logged-in user's ID
+                if (AuthStateTask != null)
+                {
+                    var authState = await AuthStateTask;
+                    var user = authState.User;
+
+                    if (user.Identity is not null && user.Identity.IsAuthenticated)
+                    {
+                        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        int.TryParse(userIdString, out modifiedById);
+                    }
+                }
+
+                // Pass both the movie ID and the user ID to the service
+                await MovieService.DeleteMovie(movie.Id, modifiedById);
+
                 if (!string.IsNullOrWhiteSpace(searchTerm))
                 {
                     await SearchMovies();

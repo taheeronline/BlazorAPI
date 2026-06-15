@@ -175,7 +175,7 @@ namespace MovieManager.API.Controllers
 
             try
             {
-                await _userService.DeleteUser(id);
+                await _userService.DeleteUser(id, 0); // Replace 0 with the actual modifiedById when available
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

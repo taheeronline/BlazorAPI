@@ -22,5 +22,9 @@ namespace MovieManager.BlazorUI.DTOs.MovieDTOs
         [Required(ErrorMessage = "Movie rating is required.")]
         [Range(0, 10, ErrorMessage = "Rating must be between 0 and 10.")]
         public double Rating { get; set; }
+        
+        [Required(ErrorMessage = "Created by is required.")]
+        public int CreatedBy { get; set; }
+
     }
 }

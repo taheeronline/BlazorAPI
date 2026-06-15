@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@inject NavigationManager NavigationManager
+@inject CustomAuthStateProvider CustomAuthStateProvider
 
 <div class="page custom-background">
     <div class="sidebar shadow-lg">
@@ -6,10 +8,23 @@
     </div>
 
     <main class="d-flex flex-column w-100">
+        
         <div class="top-row px-4 shadow-sm bg-white d-flex justify-content-end align-items-center">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank" class="btn btn-outline-primary btn-sm px-4 fw-bold rounded-pill shadow-sm">
-                <i class="bi bi-box-arrow-in-right me-1"></i> Login
-            </a>
+            <AuthorizeView Context="authState">
+                <Authorized>
+                    <span class="me-3 text-muted">
+                        Welcome, <strong class="text-primary">@authState.User.Identity?.Name</strong>!
+                    </span>
+                    <button @onclick="HandleLogout" class="btn btn-outline-danger btn-sm px-4 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/login" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
 
         <article class="content px-4 py-4 flex-grow-1">
@@ -23,3 +38,13 @@
     <a href="." class="reload fw-bold ms-3 text-danger text-decoration-none">Reload</a>
     <span class="dismiss ms-2 text-danger" role="button">🗙</span>
 </div>
+
+@code {
+    private async Task HandleLogout()
+    {
+        // NO MORE CASTING!
+        await CustomAuthStateProvider.UpdateAuthenticationState(null);
+
+        NavigationManager.NavigateTo("/login");
+    }
+}

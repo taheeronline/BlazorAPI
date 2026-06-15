@@ -77,6 +77,9 @@
     private string? apiErrorMessage;
     private bool isSubmitting;
 
+    // 1. Add the Cascading Parameter to get the user's session data
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
     private async Task HandleRegistration()
     {
         apiErrorMessage = null;
@@ -84,7 +87,29 @@
 
         try
         {
+            // 1. Extract the logged-in user's ID before sending to the API
+            if (AuthStateTask != null)
+            {
+                var authState = await AuthStateTask;
+                var user = authState.User;
+
+                if (user.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    // Find the ID we stored in CustomAuthStateProvider
+                    var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    if (int.TryParse(userIdString, out int userId))
+                    {
+                        // Assign the ID to your registration DTO
+                        registerModel.CreatedBy = userId;
+                    }
+                }
+            }
+
+            // 2. Call your API service to create the user
             var success = await UserService.CreateUser(registerModel);
+
+            // 3. Redirect on success
             NavigationManager.NavigateTo("/");
         }
         catch (Exception ex)

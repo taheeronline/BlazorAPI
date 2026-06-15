@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Components.Authorization;
 using MovieManager.BlazorUI.Components;
+using MovieManager.BlazorUI.Providers;
 using MovieManager.BlazorUI.Services.Implementation;
 using MovieManager.BlazorUI.Services.Interface;
 
@@ -7,6 +9,12 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+// 1. Register the concrete class itself
+builder.Services.AddScoped<CustomAuthStateProvider>();
+
+// 2. Tell Blazor's internal systems to use that exact same instance
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<CustomAuthStateProvider>());
 
 // --- API CLIENT REGISTRATIONS ---
 

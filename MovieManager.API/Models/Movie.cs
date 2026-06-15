@@ -9,12 +9,9 @@ namespace MovieManager.API.Models
         public DateTimeOffset ReleaseDate { get; private set; }
         public double Rating { get; private set; } = 0;
 
-        public int CreatedBy { get; private set; }
-        public int ModifiedBy { get; private set; }
-
         // Make sure these are strictly 'User'
-        public User CreatedByUser { get; private set; }
-        public User ModifiedByUser { get; private set; }
+        public User? CreatedByUser { get; private set; }
+        public User? ModifiedByUser { get; private set; }
 
         private Movie()
         {

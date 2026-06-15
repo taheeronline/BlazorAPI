@@ -22,5 +22,8 @@ namespace MovieManager.API.DTOs.UserDTOs
 
         // Optionally default to "User" to prevent accidental Admin creation
         public string Role { get; set; } = "User";
+
+        public int CreatedBy { get; set; }
+
     }
 }

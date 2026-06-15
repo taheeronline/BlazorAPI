@@ -61,9 +61,10 @@ namespace MovieManager.BlazorUI.Services.Implementation
             }
         }
 
-        public Task DeleteMovie(int id)
+        public Task DeleteMovie(int id, int modifiedById)
         {
-            return _httpClient.DeleteAsync($"api/movies/{id}");
+            // Send a DELETE request with the modifiedById as a query parameter
+            return _httpClient.DeleteAsync($"api/movies/{id}?modifiedById={modifiedById}");
         }
 
         public async Task<IEnumerable<MovieDTO>> GetByDirector(string director)

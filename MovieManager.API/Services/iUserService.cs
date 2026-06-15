@@ -11,7 +11,7 @@ namespace MovieManager.API.Services
         Task<UserDTO?> GetByEmail(string email);
         Task<UserDTO> CreateUser(CreateUserDTO createDTO);
         Task UpdateUser(int id, UpdateUserDTO updateDTO);
-        Task DeleteUser(int id);
+        Task DeleteUser(int id, int modifiedById);
         Task<UserDTO?> Login(LoginDTO loginDTO);
     }
 }

@@ -1,0 +1,97 @@
+﻿@page "/login"
+@rendermode InteractiveServer
+@inject iUserService UserService
+@inject CustomAuthStateProvider CustomAuthStateProvider
+@inject NavigationManager NavigationManager
+
+<PageTitle>Login</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <h3 class="text-center mb-4"><i class="bi bi-box-arrow-in-right"></i> Login</h3>
+
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger shadow-sm">@errorMessage</div>
+                    }
+
+                    <EditForm Model="loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Username</label>
+                            <InputText @bind-Value="loginModel.UserName" class="form-control" placeholder="Enter your username" />
+                            <ValidationMessage For="() => loginModel.UserName" class="text-danger small" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Password</label>
+                            <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+                            <ValidationMessage For="() => loginModel.Password" class="text-danger small" />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Logging in...</span>
+                            }
+                            else
+                            {
+                                <span>Login</span>
+                            }
+                        </button>
+
+                        <div class="text-center mt-4">
+                            <span class="text-muted">Don't have an account?</span>
+                            <a href="/register" class="text-decoration-none fw-bold ms-1">Register here</a>
+                        </div>
+
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDTO loginModel = new();
+    private string? errorMessage;
+    private bool isSubmitting;
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+        isSubmitting = true;
+
+        try
+        {
+            var user = await UserService.Login(loginModel);
+
+            if (user != null)
+            {
+                // NO MORE CASTING! Just call the method directly:
+                await CustomAuthStateProvider.UpdateAuthenticationState(user);
+
+                NavigationManager.NavigateTo("/movies");
+            }
+            else
+            {
+                // Note: I also updated this message slightly since you are using Username now instead of Email!
+                errorMessage = "Invalid username or password.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = "A server error occurred. Please try again later.";
+            Console.WriteLine(ex.Message);
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

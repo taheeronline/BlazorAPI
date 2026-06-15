@@ -1,0 +1,148 @@
+﻿@page "/users/edit/{Id:int}"
+@rendermode InteractiveServer
+@inject iUserService UserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit User</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-person-gear"></i> Edit User Profile</h2>
+        <p class="text-muted">Update the account details and system role for this user.</p>
+    </div>
+
+    @if (editUser == null)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0" style="max-width: 800px;">
+            <div class="card-body p-4">
+
+                @if (!string.IsNullOrEmpty(apiErrorMessage))
+                {
+                    <div class="alert alert-danger shadow-sm">
+                        <i class="bi bi-exclamation-circle-fill me-2"></i> @apiErrorMessage
+                    </div>
+                }
+
+                <EditForm Model="editUser" OnValidSubmit="HandleValidSubmit" FormName="EditUserForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Full Name</label>
+                            <InputText class="form-control" @bind-Value="editUser.Name" />
+                            <ValidationMessage For="() => editUser.Name" class="text-danger small" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Username</label>
+                            <InputText class="form-control" @bind-Value="editUser.UserName" />
+                            <ValidationMessage For="() => editUser.UserName" class="text-danger small" />
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <InputText type="email" class="form-control" @bind-Value="editUser.Email" />
+                            <ValidationMessage For="() => editUser.Email" class="text-danger small" />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">System Role</label>
+                            <InputSelect class="form-select" @bind-Value="editUser.Role">
+                                <option value="User">Standard User</option>
+                                <option value="Admin">Administrator</option>
+                            </InputSelect>
+                            <ValidationMessage For="() => editUser.Role" class="text-danger small" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Updating...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-save me-1"></i> <span>Update Profile</span>
+                            }
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="NavigateBack">
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private UpdateUserDTO? editUser;
+    private string? apiErrorMessage;
+    private bool isSubmitting;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch the existing user from the API to pre-fill the form
+        var existingUser = await UserService.GetById(Id);
+
+        if (existingUser != null)
+        {
+            editUser = new UpdateUserDTO
+            {
+                Name = existingUser.Name,
+                UserName = existingUser.UserName,
+                Email = existingUser.Email,
+                Role = existingUser.Role
+            };
+        }
+        else
+        {
+            // If user doesn't exist, kick them back to the list
+            NavigationManager.NavigateTo("/users");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        apiErrorMessage = null;
+        isSubmitting = true;
+
+        try
+        {
+            if (editUser != null)
+            {
+                await UserService.UpdateUser(Id, editUser);
+                NavigationManager.NavigateTo("/users");
+            }
+        }
+        catch (Exception ex)
+        {
+            apiErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/users");
+    }
+}
