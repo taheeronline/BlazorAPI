@@ -20,6 +20,7 @@ builder.Services.AddDbContext<MovieDbContext>(options =>
             errorNumbersToAdd: null)));
 
 // Add application services with dependency injection
+builder.Services.AddScoped<iUserService, UserService>();
 builder.Services.AddScoped<iMovieService, MovieService>();
 
 // Add logging

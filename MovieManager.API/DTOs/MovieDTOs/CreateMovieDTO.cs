@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MovieManager.API.DTOs
+namespace MovieManager.API.DTOs.MovieDTOs
 {
     public class CreateMovieDTO
     {
@@ -22,5 +22,7 @@ namespace MovieManager.API.DTOs
         [Required(ErrorMessage = "Movie rating is required.")]
         [Range(0, 10, ErrorMessage = "Rating must be between 0 and 10.")]
         public double Rating { get; set; }
+
+        public int CreatedBy { get; set; }  // Assuming this is the ID of the user creating the movie
     }
 }

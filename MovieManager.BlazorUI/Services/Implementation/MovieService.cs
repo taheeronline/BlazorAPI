@@ -1,4 +1,4 @@
-﻿using MovieManager.BlazorUI.DTOs;
+﻿using MovieManager.BlazorUI.DTOs.MovieDTOs;
 using MovieManager.BlazorUI.Services.Interface;
 
 namespace MovieManager.BlazorUI.Services.Implementation

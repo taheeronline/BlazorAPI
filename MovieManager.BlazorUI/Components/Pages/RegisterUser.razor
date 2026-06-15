@@ -1,0 +1,100 @@
+﻿@page "/register"
+@rendermode InteractiveServer
+@inject iUserService UserService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Register Account</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <h3 class="text-center mb-4"><i class="bi bi-person-plus"></i> Create an Account</h3>
+
+                    @if (!string.IsNullOrEmpty(apiErrorMessage))
+                    {
+                        <div class="alert alert-danger shadow-sm">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i> @apiErrorMessage
+                        </div>
+                    }
+
+                    <EditForm Model="registerModel" OnValidSubmit="HandleRegistration" FormName="RegisterForm">
+                        <DataAnnotationsValidator />
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Full Name</label>
+                                <InputText @bind-Value="registerModel.Name" class="form-control" placeholder="John Doe" />
+                                <ValidationMessage For="() => registerModel.Name" class="text-danger small" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Username</label>
+                                <InputText @bind-Value="registerModel.UserName" class="form-control" placeholder="johndoe123" />
+                                <ValidationMessage For="() => registerModel.UserName" class="text-danger small" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Email Address</label>
+                            <InputText @bind-Value="registerModel.Email" type="email" class="form-control" placeholder="name@example.com" />
+                            <ValidationMessage For="() => registerModel.Email" class="text-danger small" />
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Password</label>
+                            <InputText @bind-Value="registerModel.Password" type="password" class="form-control" placeholder="Create a strong password" />
+                            <ValidationMessage For="() => registerModel.Password" class="text-danger small" />
+                        </div>
+
+                        @* Hidden input for Role, or you can make it a dropdown if Admins are creating the accounts *@
+                        <InputText @bind-Value="registerModel.Role" type="hidden" />
+
+                        <button type="submit" class="btn btn-primary w-100 fw-bold shadow-sm mb-3">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Registering...</span>
+                            }
+                            else
+                            {
+                                <span>Register</span>
+                            }
+                        </button>
+
+                        <div class="text-center text-muted small">
+                            Already have an account? <a href="/login" class="text-decoration-none fw-bold">Log in here</a>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private CreateUserDTO registerModel = new();
+    private string? apiErrorMessage;
+    private bool isSubmitting;
+
+    private async Task HandleRegistration()
+    {
+        apiErrorMessage = null;
+        isSubmitting = true;
+
+        try
+        {
+            var success = await UserService.CreateUser(registerModel);
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            // Displays the error thrown by the API (e.g., "A user with this email already exists.")
+            apiErrorMessage = ex.Message;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+}

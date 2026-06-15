@@ -1,4 +1,4 @@
-﻿using MovieManager.BlazorUI.DTOs;
+﻿using MovieManager.BlazorUI.DTOs.MovieDTOs;
 
 namespace MovieManager.BlazorUI.Services.Interface
 {
@@ -6,12 +6,11 @@ namespace MovieManager.BlazorUI.Services.Interface
     {
         Task<IEnumerable<MovieDTO>> GetAll();
         Task<MovieDTO> GetById(int id);
-        Task<IEnumerable<MovieDTO>> GetByTitle(string title);
-        Task<IEnumerable<MovieDTO>> GetByDirector(string director);
-        Task<IEnumerable<MovieDTO>> GetByGenre(string genre);
-
         Task<MovieDTO> CreateMovie(CreateMovieDTO createMovieDTO);
         Task<MovieDTO> UpdateMovie(int id, UpdateMovieDTO updateMovieDTO);
         Task DeleteMovie(int id);
+        Task<IEnumerable<MovieDTO>> GetByTitle(string title);
+        Task<IEnumerable<MovieDTO>> GetByDirector(string director);
+        Task<IEnumerable<MovieDTO>> GetByGenre(string genre);
     }
 }

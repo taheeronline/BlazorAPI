@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using MovieManager.API.DTOs;
+using MovieManager.API.DTOs.MovieDTOs;
 using MovieManager.API.Services;
 
 namespace MovieManager.API.Controllers
@@ -40,7 +40,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("GET request: Retrieve all movies");
 
-            var movies = await _movieService.GetAllMoviesAsync();
+            var movies = await _movieService.GetAll();
             return Ok(movies);
         }
 
@@ -60,7 +60,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("POST request: Create new movie");
 
-            var createdMovie = await _movieService.CreateMovieAsync(createMovieDto);
+            var createdMovie = await _movieService.CreateMovie(createMovieDto);
             return CreatedAtAction(nameof(GetMovieById), new { id = createdMovie.Id }, createdMovie);
         }
 
@@ -83,7 +83,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("PUT request: Update movie with ID {movieId}", id);
 
-            var updatedMovie = await _movieService.UpdateMovieAsync(id, updateMovieDto);
+            var updatedMovie = await _movieService.UpdateMovie(id, updateMovieDto);
             return Ok(updatedMovie);
         }
 
@@ -105,7 +105,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("DELETE request: Delete movie with ID {movieId}", id);
 
-            await _movieService.DeleteMovieAsync(id);
+            await _movieService.DeleteMovie(id);
             return NoContent();
         }
 
@@ -127,7 +127,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("GET request: Retrieve movie with ID {movieId}", id);
 
-            var movie = await _movieService.GetMovieByIdAsync(id);
+            var movie = await _movieService.GetById(id);
             return Ok(movie);
         }
 
@@ -147,7 +147,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("GET request: Search movies by title '{title}'", title);
 
-            var movies = await _movieService.SearchMoviesByTitleAsync(title);
+            var movies = await _movieService.GetByTitle(title);
             return Ok(movies);
         }
 
@@ -167,7 +167,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("GET request: Search movies by director '{director}'", director);
 
-            var movies = await _movieService.SearchMoviesByDirectorAsync(director);
+            var movies = await _movieService.GetByDirector(director);
             return Ok(movies);
         }
 
@@ -187,7 +187,7 @@ namespace MovieManager.API.Controllers
         {
             _logger.LogInformation("GET request: Search movies by genre '{genre}'", genre);
 
-            var movies = await _movieService.SearchMoviesByGenreAsync(genre);
+            var movies = await _movieService.GetByGenre(genre);
             return Ok(movies);
         }
     }

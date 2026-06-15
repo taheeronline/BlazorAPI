@@ -26,6 +26,21 @@ namespace MovieManager.API.Persistence.Configurations
             builder.HasIndex(m => m.Title).HasDatabaseName("IX_Movies_Title");
             builder.HasIndex(m => m.Director).HasDatabaseName("IX_Movies_Director");
             builder.HasIndex(m => m.Genre).HasDatabaseName("IX_Movies_Genre");
+
+            // 1. CreatedBy Relationship
+            builder.HasOne(m => m.CreatedByUser)
+                   .WithMany()
+                   .HasForeignKey(m => m.CreatedBy)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            // 2. ModifiedBy Relationship
+            builder.HasOne(m => m.ModifiedByUser)
+                   .WithMany()
+                   .HasForeignKey(m => m.ModifiedBy)
+                   .IsRequired()
+                   .OnDelete(DeleteBehavior.Restrict);
+
         }
     }
 }

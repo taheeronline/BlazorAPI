@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MovieManager.BlazorUI.DTOs
+namespace MovieManager.API.DTOs.MovieDTOs
 {
-    public class CreateMovieDTO
+    public class UpdateMovieDTO
     {
         [Required(ErrorMessage = "Movie title is required.")]
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 255 characters.")]
@@ -22,5 +22,7 @@ namespace MovieManager.BlazorUI.DTOs
         [Required(ErrorMessage = "Movie rating is required.")]
         [Range(0, 10, ErrorMessage = "Rating must be between 0 and 10.")]
         public double Rating { get; set; }
+
+        public int ModifiedBy { get; set; }  // Assuming this is the ID of the user updating the movie
     }
 }

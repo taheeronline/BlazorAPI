@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MovieManager.BlazorUI.DTOs
+namespace MovieManager.BlazorUI.DTOs.MovieDTOs
 {
     public class UpdateMovieDTO
     {

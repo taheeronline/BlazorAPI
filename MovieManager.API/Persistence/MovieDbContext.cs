@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using MovieManager.API.Models;
-using MovieManager.API.Persistence.Configurations;
+using System.Reflection;
 
 namespace MovieManager.API.Persistence
 {
@@ -11,12 +11,16 @@ namespace MovieManager.API.Persistence
         }
 
         public DbSet<Movie> Movies { get; set; }
+        public DbSet<User> Users { get; set; } 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
             // Apply entity configurations
-            modelBuilder.ApplyConfiguration(new MovieConfiguration());
+            //modelBuilder.ApplyConfiguration(new MovieConfiguration());
+            //modelBuilder.ApplyConfiguration(new UserConfiguration());
+
+            modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
         }
     }

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MovieManager.API.DTOs;
+using MovieManager.API.DTOs.MovieDTOs;
 using MovieManager.API.Exceptions;
 using MovieManager.API.Models;
 using MovieManager.API.Persistence;
@@ -17,7 +17,7 @@ namespace MovieManager.API.Services
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetAllMoviesAsync()
+        public async Task<IEnumerable<MovieDTO>> GetAll()
         {
             try
             {
@@ -35,7 +35,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<MovieDTO> GetMovieByIdAsync(int id)
+        public async Task<MovieDTO> GetById(int id)
         {
             if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
 
@@ -57,7 +57,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto)
+        public async Task<MovieDTO> CreateMovie(CreateMovieDTO createMovieDto)
         {
             if (createMovieDto is null) throw new MovieValidationException("Movie data cannot be null.");
 
@@ -68,7 +68,8 @@ namespace MovieManager.API.Services
                     createMovieDto.Director,
                     createMovieDto.Genre,
                     createMovieDto.ReleaseDate,
-                    createMovieDto.Rating
+                    createMovieDto.Rating,
+                    userId: 1 // In a real application, this would come from the authenticated user context
                 );
 
                 _dbContext.Movies.Add(movie);
@@ -87,7 +88,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<MovieDTO> UpdateMovieAsync(int id, UpdateMovieDTO updateMovieDto)
+        public async Task<MovieDTO> UpdateMovie(int id, UpdateMovieDTO updateMovieDto)
         {
             if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
             if (updateMovieDto is null) throw new MovieValidationException("Updated movie data cannot be null.");
@@ -103,7 +104,8 @@ namespace MovieManager.API.Services
                     updateMovieDto.Director,
                     updateMovieDto.Genre,
                     updateMovieDto.ReleaseDate,
-                    updateMovieDto.Rating
+                    updateMovieDto.Rating,
+                    userId: 1 // In a real application, this would come from the authenticated user context
                 );
 
                 await _dbContext.SaveChangesAsync();
@@ -122,7 +124,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task DeleteMovieAsync(int id)
+        public async Task DeleteMovie(int id)
         {
             if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
 
@@ -143,7 +145,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<IEnumerable<MovieDTO>> SearchMoviesByTitleAsync(string title)
+        public async Task<IEnumerable<MovieDTO>> GetByTitle(string title)
         {
             if (string.IsNullOrWhiteSpace(title)) throw new MovieValidationException("Search title cannot be empty.");
 
@@ -165,7 +167,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<IEnumerable<MovieDTO>> SearchMoviesByDirectorAsync(string director)
+        public async Task<IEnumerable<MovieDTO>> GetByDirector(string director)
         {
             if (string.IsNullOrWhiteSpace(director)) throw new MovieValidationException("Search director name cannot be empty.");
 
@@ -188,7 +190,7 @@ namespace MovieManager.API.Services
             }
         }
 
-        public async Task<IEnumerable<MovieDTO>> SearchMoviesByGenreAsync(string genre)
+        public async Task<IEnumerable<MovieDTO>> GetByGenre(string genre)
         {
             if (string.IsNullOrWhiteSpace(genre)) throw new MovieValidationException("Search genre cannot be empty.");
 

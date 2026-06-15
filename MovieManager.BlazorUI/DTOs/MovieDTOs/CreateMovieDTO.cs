@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace MovieManager.API.DTOs
+namespace MovieManager.BlazorUI.DTOs.MovieDTOs
 {
-    public class UpdateMovieDTO
+    public class CreateMovieDTO
     {
         [Required(ErrorMessage = "Movie title is required.")]
         [StringLength(255, MinimumLength = 1, ErrorMessage = "Title must be between 1 and 255 characters.")]
