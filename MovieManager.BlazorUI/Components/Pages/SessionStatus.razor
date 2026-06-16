@@ -4,19 +4,23 @@
 
 <AuthorizeView>
     <Authorized>
-        <div class="d-flex align-items-center gap-3">
-            <span class="fw-bold">Welcome, @context.User.Identity?.Name!</span>
-            
+        <div class="d-flex align-items-center me-3">
+
+            <span class="me-3 text-muted">
+                Welcome, <strong class="text-primary">@context.User.Identity?.Name</strong>!
+            </span>
+
             @if (_timeRemaining.TotalSeconds > 0)
             {
-                <span class="badge bg-info text-light">
-                    Session expires in: @_timeRemaining.ToString(@"hh\:mm\:ss")
+                <span class="badge bg-info text-dark shadow-sm">
+                    <i class="bi bi-stopwatch me-1"></i> Expires in: @_timeRemaining.ToString(@"hh\:mm\:ss")
                 </span>
             }
             else
             {
-                <span class="badge bg-danger">Session Expired</span>
+                <span class="badge bg-danger shadow-sm">Session Expired</span>
             }
+
         </div>
     </Authorized>
 </AuthorizeView>
