@@ -1,0 +1,111 @@
+﻿@rendermode InteractiveServer
+@implements IDisposable
+@inject AuthenticationStateProvider AuthStateProvider
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex align-items-center gap-3">
+            <span class="fw-bold">Welcome, @context.User.Identity?.Name!</span>
+            
+            @if (_timeRemaining.TotalSeconds > 0)
+            {
+                <span class="badge bg-info text-light">
+                    Session expires in: @_timeRemaining.ToString(@"hh\:mm\:ss")
+                </span>
+            }
+            else
+            {
+                <span class="badge bg-danger">Session Expired</span>
+            }
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private System.Timers.Timer? _timer;
+    private TimeSpan _timeRemaining;
+    private DateTime _expirationTime;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to state changes (so the timer starts immediately upon login)
+        AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check initial state on page load
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        SetupTimerForUser(authState.User);
+        StateHasChanged(); 
+    }
+
+    private async void OnAuthStateChanged(Task<AuthenticationState> task)
+    {
+        var authState = await task;
+        SetupTimerForUser(authState.User);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SetupTimerForUser(ClaimsPrincipal user)
+    {
+        StopTimer(); // Clear any existing timer
+
+        if (user.Identity?.IsAuthenticated == true)
+        {
+            var expClaim = user.FindFirst("Expiration")?.Value;
+            
+            // Parse the ISO 8601 string back to a UTC DateTime
+            if (DateTime.TryParse(expClaim, null, System.Globalization.DateTimeStyles.RoundtripKind, out _expirationTime))
+            {
+                StartTimer();
+            }
+        }
+    }
+
+    private void StartTimer()
+    {
+        UpdateCountdown(); // Do an immediate calculation
+        
+        _timer = new System.Timers.Timer(1000); // Tick every 1 second
+        _timer.Elapsed += (s, e) => 
+        {
+            UpdateCountdown();
+            // Tell Blazor to re-render the UI with the new time
+            InvokeAsync(StateHasChanged); 
+        };
+        _timer.Start();
+    }
+
+    private void UpdateCountdown()
+    {
+        var remaining = _expirationTime - DateTime.UtcNow;
+        
+        if (remaining.TotalSeconds <= 0)
+        {
+            _timeRemaining = TimeSpan.Zero;
+            StopTimer();
+        }
+        else
+        {
+            _timeRemaining = remaining;
+        }
+    }
+
+    private void StopTimer()
+    {
+        if (_timer != null)
+        {
+            _timer.Stop();
+            _timer.Dispose();
+            _timer = null;
+        }
+    }
+
+    public void Dispose()
+    {
+        // Prevent memory leaks by unsubscribing and destroying the timer
+        AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+        StopTimer();
+    }
+}
