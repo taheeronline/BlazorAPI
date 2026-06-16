@@ -92,6 +92,9 @@
     [Parameter]
     public int Id { get; set; }
 
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
     private UpdateUserDTO? editUser;
     private string? apiErrorMessage;
     private bool isSubmitting;
@@ -125,6 +128,18 @@
 
         try
         {
+            var authState = await AuthStateTask;
+            var user = authState.User;
+
+            if (user.Identity is not null && user.Identity.IsAuthenticated)
+            {
+                var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                if (int.TryParse(userIdString, out int userId))
+                {
+                    editUser.ModifiedBy = userId;
+                }
+            }
             if (editUser != null)
             {
                 await UserService.UpdateUser(Id, editUser);

@@ -169,13 +169,13 @@ namespace MovieManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteUser(int id)
+        public async Task<IActionResult> DeleteUser(int id, int modifiedById)
         {
             _logger.LogInformation("DELETE request: Delete user with ID {userId}", id);
 
             try
             {
-                await _userService.DeleteUser(id, 0); // Replace 0 with the actual modifiedById when available
+                await _userService.DeleteUser(id, modifiedById);
                 return NoContent();
             }
             catch (KeyNotFoundException ex)

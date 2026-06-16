@@ -55,9 +55,9 @@ namespace MovieManager.BlazorUI.Services.Implementation
             }
         }
 
-        public async Task DeleteUser(int id)
+        public async Task DeleteUser(int id, int modifiedById)
         {
-            var response = await _httpClient.DeleteAsync($"api/users/{id}");
+            var response = await _httpClient.DeleteAsync($"api/users/{id}?modifiedById={modifiedById}");
 
             if (!response.IsSuccessStatusCode)
             {
