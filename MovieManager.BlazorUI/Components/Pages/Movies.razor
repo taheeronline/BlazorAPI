@@ -69,7 +69,11 @@
                                 <th>Genre</th>
                                 <th>Release Date</th>
                                 <th>Rating</th>
-                                <th class="text-center" style="width: 160px;">Actions</th>
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <th class="text-center" style="width: 160px;">Actions</th>
+                                    </Authorized>
+                                </AuthorizeView>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,9 +89,9 @@
                                     <td>
                                         <span class="text-warning fw-bold">★</span> @movie.Rating.ToString("0.0") / 10
                                     </td>
-                                    <td class="text-center">
-                                        <AuthorizeView>
-                                            <Authorized>
+                                    <AuthorizeView>
+                                        <Authorized>
+                                            <td class="text-center">
                                                 <div class="btn-group" role="group">
                                                     <button class="btn btn-sm btn-outline-primary" @onclick="() => EditMovie(movie)">
                                                         Edit
@@ -96,9 +100,9 @@
                                                         Delete
                                                     </button>
                                                 </div>
-                                            </Authorized>
-                                        </AuthorizeView>
-                                    </td>
+                                            </td>
+                                        </Authorized>
+                                    </AuthorizeView>
                                 </tr>
                             }
                         </tbody>

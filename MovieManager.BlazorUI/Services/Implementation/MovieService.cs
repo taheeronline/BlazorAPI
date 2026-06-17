@@ -13,7 +13,10 @@ namespace MovieManager.BlazorUI.Services.Implementation
         }
         public async Task<IEnumerable<MovieDTO>> GetAll()
         {
-            return await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>("api/movies");
+            var movies = await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>("api/movies");
+
+            // Returns the movies if not null, otherwise returns an empty collection
+            return movies ?? Enumerable.Empty<MovieDTO>();
         }
 
         public async Task<MovieDTO> CreateMovie(CreateMovieDTO createMovieDTO)
@@ -27,7 +30,7 @@ namespace MovieManager.BlazorUI.Services.Implementation
                 // Optional: If your API returns the newly created movie (with its generated Database ID)
                 // you can deserialize it and return it back to the Blazor component.
                 var createdMovie = await response.Content.ReadFromJsonAsync<MovieDTO>();
-                return createdMovie;
+                return createdMovie ?? new MovieDTO();
             }
             else
             {
@@ -49,10 +52,10 @@ namespace MovieManager.BlazorUI.Services.Implementation
                 // APIs typically return 204 No Content for PUT, but if yours returns the updated object (200 OK):
                 if (response.StatusCode != System.Net.HttpStatusCode.NoContent)
                 {
-                    return await response.Content.ReadFromJsonAsync<MovieDTO>();
+                    return await response.Content.ReadFromJsonAsync<MovieDTO>()?? new MovieDTO();
                 }
 
-                return null; // Update succeeded, but no data returned
+                return new MovieDTO(); // Update succeeded, but no data returned
             }
             else
             {
@@ -85,7 +88,8 @@ namespace MovieManager.BlazorUI.Services.Implementation
         {
             // This route matches [HttpGet("{id}")] exactly as before, 
             // but using async/await and returning nullable (?) is safer.
-            return await _httpClient.GetFromJsonAsync<MovieDTO>($"api/movies/{id}");
+            var movie = await _httpClient.GetFromJsonAsync<MovieDTO>($"api/movies/{id}");
+            return movie ?? new MovieDTO();
         }
 
         public async Task<IEnumerable<MovieDTO>> GetByTitle(string title)

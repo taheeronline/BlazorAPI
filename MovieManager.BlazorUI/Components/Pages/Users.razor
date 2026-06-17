@@ -50,7 +50,11 @@
                                 <th class="ps-4">Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th class="text-center">Actions</th>
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <th class="text-center">Actions</th>
+                                    </Authorized>
+                                </AuthorizeView>
                             </tr>
                         </thead>
                         <tbody>
@@ -60,9 +64,11 @@
                                     <td class="ps-4 fw-bold">@user.Name</td>
                                     <td><span class="badge bg-secondary">@(user.UserName)</span></td>
                                     <td><a href="mailto:@user.Email" class="text-decoration-none">@user.Email</a></td>
-                                    <td class="text-center">
-                                        <AuthorizeView>
-                                            <Authorized>
+
+                                    @* Move the entire <td> inside the AuthorizeView *@
+                                    <AuthorizeView>
+                                        <Authorized>
+                                            <td class="text-center">
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <button class="btn btn-outline-primary" @onclick="() => EditUser(user.Id)">
                                                         <i class="bi bi-pencil"></i> Edit
@@ -71,9 +77,10 @@
                                                         <i class="bi bi-trash"></i> Delete
                                                     </button>
                                                 </div>
-                                            </Authorized>
-                                        </AuthorizeView>
-                                    </td>
+                                            </td>
+                                        </Authorized>
+                                    </AuthorizeView>
+
                                 </tr>
                             }
                         </tbody>

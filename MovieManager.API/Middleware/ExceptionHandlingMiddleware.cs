@@ -12,21 +12,12 @@ namespace MovieManager.API.Middleware
         private readonly RequestDelegate _next;
         private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-        /// <summary>
-        /// Initializes a new instance of the ExceptionHandlingMiddleware class.
-        /// </summary>
-        /// <param name="next">The next middleware in the pipeline.</param>
-        /// <param name="logger">Logger for recording exception details.</param>
         public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
         {
             _next = next;
             _logger = logger;
         }
 
-        /// <summary>
-        /// Invokes the middleware to process the HTTP request and handle exceptions.
-        /// </summary>
-        /// <param name="context">The HTTP context for the current request.</param>
         public async Task InvokeAsync(HttpContext context)
         {
             try
@@ -39,67 +30,53 @@ namespace MovieManager.API.Middleware
             }
         }
 
-        /// <summary>
-        /// Handles the exception and returns an appropriate HTTP response.
-        /// </summary>
-        /// <param name="context">The HTTP context for the current request.</param>
-        /// <param name="exception">The exception that was thrown.</param>
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        // Removed 'static' so we can use _logger
+        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
 
-            var response = new ErrorResponse
+            // 1. Map the exception to the correct status code and details using pattern matching
+            var (statusCode, title, message, validationErrors) = exception switch
             {
-                Message = exception.Message,
-                Timestamp = DateTimeOffset.UtcNow
+                MovieNotFoundException => (StatusCodes.Status404NotFound, "Not Found", exception.Message, null),
+                MovieValidationException ex => (StatusCodes.Status400BadRequest, "Validation Error", ex.Message, ex.Errors),
+                MovieManagerException ex => (ex.StatusCode, GetExceptionTitle(ex.StatusCode), ex.Message, null),
+                ArgumentException => (StatusCodes.Status400BadRequest, "Invalid Argument", exception.Message, null),
+
+                // Default fallback for unhandled errors
+                _ => (StatusCodes.Status500InternalServerError, "Internal Server Error", "An unexpected error occurred. Please try again later.", null)
             };
 
-            // Handle specific application exceptions
-            if (exception is MovieNotFoundException)
+            // 2. Log the exception
+            if (statusCode == StatusCodes.Status500InternalServerError)
             {
-                context.Response.StatusCode = StatusCodes.Status404NotFound;
-                response.StatusCode = 404;
-                response.Title = "Not Found";
-            }
-            else if (exception is MovieValidationException validationException)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                response.StatusCode = 400;
-                response.Title = "Validation Error";
-                response.ValidationErrors = validationException.Errors;
-            }
-            else if (exception is MovieManagerException movieException)
-            {
-                context.Response.StatusCode = movieException.StatusCode;
-                response.StatusCode = movieException.StatusCode;
-                response.Title = GetExceptionTitle(movieException.StatusCode);
-            }
-            else if (exception is ArgumentException)
-            {
-                context.Response.StatusCode = StatusCodes.Status400BadRequest;
-                response.StatusCode = 400;
-                response.Title = "Invalid Argument";
+                // CRITICAL: Log full stack traces for unexpected 500 errors
+                _logger.LogError(exception, "An unhandled exception occurred processing the request.");
             }
             else
             {
-                // Generic unhandled exceptions
-                context.Response.StatusCode = StatusCodes.Status500InternalServerError;
-                response.StatusCode = 500;
-                response.Title = "Internal Server Error";
-                response.Message = "An unexpected error occurred. Please try again later.";
+                // Optional: Log handled business logic errors as warnings or information
+                _logger.LogWarning("Handled exception ({StatusCode}): {Message}", statusCode, message);
             }
+
+            // 3. Build the response
+            var response = new ErrorResponse
+            {
+                StatusCode = statusCode,
+                Title = title,
+                Message = message,
+                Timestamp = DateTimeOffset.UtcNow,
+                ValidationErrors = validationErrors
+            };
+
+            context.Response.StatusCode = statusCode;
 
             var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
             var json = JsonSerializer.Serialize(response, options);
 
-            return context.Response.WriteAsync(json);
+            await context.Response.WriteAsync(json);
         }
 
-        /// <summary>
-        /// Gets the appropriate title/description for an HTTP status code.
-        /// </summary>
-        /// <param name="statusCode">The HTTP status code.</param>
-        /// <returns>A human-readable title for the status code.</returns>
         private static string GetExceptionTitle(int statusCode)
         {
             return statusCode switch
@@ -113,34 +90,12 @@ namespace MovieManager.API.Middleware
         }
     }
 
-    /// <summary>
-    /// Response model for error responses sent to clients.
-    /// </summary>
     public class ErrorResponse
     {
-        /// <summary>
-        /// HTTP status code of the error.
-        /// </summary>
         public int StatusCode { get; set; }
-
-        /// <summary>
-        /// Title/type of the error.
-        /// </summary>
         public string Title { get; set; } = "Error";
-
-        /// <summary>
-        /// Detailed error message.
-        /// </summary>
         public string Message { get; set; } = string.Empty;
-
-        /// <summary>
-        /// Timestamp when the error occurred.
-        /// </summary>
         public DateTimeOffset Timestamp { get; set; }
-
-        /// <summary>
-        /// Validation errors, if applicable.
-        /// </summary>
         public Dictionary<string, string[]>? ValidationErrors { get; set; }
     }
 }
