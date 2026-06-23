@@ -21,7 +21,7 @@ namespace MovieManager.API.Persistence.Configurations
             builder.Property(m => m.ModifiedDate);
 
             builder.Property(m => m.IsDeleted).IsRequired().HasDefaultValue(false);
-            builder.HasQueryFilter(m => !m.IsDeleted);
+            builder.HasQueryFilter(m => !m.IsDeleted?? false);
 
             builder.HasIndex(m => m.Title).HasDatabaseName("IX_Movies_Title");
             builder.HasIndex(m => m.Director).HasDatabaseName("IX_Movies_Director");

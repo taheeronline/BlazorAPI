@@ -75,7 +75,7 @@
             {
                 // 3. SET EXPIRATION HERE using UtcNow!
                 // Example: Set to expire in exactly 30 minutes from right now
-                user.ExpirationTime = DateTime.UtcNow.AddMinutes(1);
+                user.ExpirationTime = DateTime.UtcNow.AddMinutes(30);
                 // NO MORE CASTING! Just call the method directly:
                 await CustomAuthStateProvider.UpdateAuthenticationState(user);
 

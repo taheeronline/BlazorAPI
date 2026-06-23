@@ -6,7 +6,7 @@
 
         public DateTime CreatedDate { get; protected set; }
         public DateTime? ModifiedDate { get; protected set; }
-        public bool IsDeleted { get; protected set; }
+        public bool? IsDeleted { get; protected set; }=false;
 
         public int? CreatedBy { get; protected set; }
         public int? ModifiedBy { get; protected set; }

@@ -22,7 +22,7 @@ namespace MovieManager.API.Persistence.Configurations
             builder.Property(u => u.ModifiedDate);
 
             builder.Property(u => u.IsDeleted).IsRequired().HasDefaultValue(false);
-            builder.HasQueryFilter(u => !u.IsDeleted);
+            builder.HasQueryFilter(u => !u.IsDeleted?? false);
 
         }
     }
