@@ -53,6 +53,7 @@
             this.Email = email;
             this.Role = role;
             this.ModifiedBy = modifiedBy;
+            UpdateLastModified();    
         }
 
         private static void ValidateInputs(string name, string userName, string email, string role)
