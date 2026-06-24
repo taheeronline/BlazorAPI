@@ -1,7 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MovieManager.API.Middleware;
 using MovieManager.API.Persistence;
-using MovieManager.API.Services;
+using MovieManager.API.Services.Implementation;
+using MovieManager.API.Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.Services.AddDbContext<MovieDbContext>(options =>
 
 // Add application services with dependency injection
 builder.Services.AddScoped<iUserService, UserService>();
+builder.Services.AddScoped<iBookService, BookService>();
 builder.Services.AddScoped<iMovieService, MovieService>();
 
 // Add logging

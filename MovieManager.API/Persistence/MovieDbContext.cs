@@ -12,6 +12,7 @@ namespace MovieManager.API.Persistence
 
         public DbSet<Movie> Movies { get; set; }
         public DbSet<User> Users { get; set; } 
+        public DbSet<Book> Books { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

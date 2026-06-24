@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using MovieManager.BlazorUI.DTOs.UserDTOs;
 using System.Security.Claims;
-using System.Timers; // Required for the Timer
 
 namespace MovieManager.BlazorUI.Providers
 {

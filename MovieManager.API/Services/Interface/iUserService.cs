@@ -1,7 +1,6 @@
 ﻿using MovieManager.API.DTOs.UserDTOs;
-using MovieManager.API.Models;
 
-namespace MovieManager.API.Services
+namespace MovieManager.API.Services.Interface
 
 {
     public interface iUserService

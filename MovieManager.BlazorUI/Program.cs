@@ -27,6 +27,11 @@ builder.Services.AddHttpClient<iMovieService, MovieService>(client =>
     client.BaseAddress = apiBaseAddress;
 });
 
+builder.Services.AddHttpClient<iBookService, BookService>(client =>
+{
+    client.BaseAddress = apiBaseAddress;
+});
+
 // Register UserService (NEW)
 builder.Services.AddHttpClient<iUserService, UserService>(client =>
 {

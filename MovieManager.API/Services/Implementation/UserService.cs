@@ -2,8 +2,9 @@
 using MovieManager.API.DTOs.UserDTOs;
 using MovieManager.API.Models;
 using MovieManager.API.Persistence;
+using MovieManager.API.Services.Interface;
 
-namespace MovieManager.API.Services
+namespace MovieManager.API.Services.Implementation
 {
     public class UserService : iUserService
     {

@@ -1,0 +1,231 @@
+﻿@page "/books"
+@rendermode InteractiveServer
+@inject iBookService BookService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>Book List</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="bi bi-book-half"></i> Book Directory</h2>
+        <AuthorizeView>
+            <Authorized>
+                <button class="btn btn-primary shadow-sm" @onclick="AddBook">
+                    + Add Book
+                </button>
+            </Authorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4 bg-light">
+        <div class="card-body py-3">
+            <div class="row gx-2">
+                <div class="col-md-3">
+                    <select class="form-select" @bind="searchType">
+                        <option value="Title">Search by Title</option>
+                        <option value="Author">Search by Author</option>
+                        <option value="Publisher">Search by Publisher</option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <input type="text" class="form-control" placeholder="Enter search term..." @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleKeyUp" />
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-secondary w-100" @onclick="SearchBooks">
+                        <i class="bi bi-search"></i> Search
+                    </button>
+                    <button class="btn btn-outline-secondary w-100" @onclick="ClearSearch">
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @if (books == null)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else if (!books.Any())
+    {
+        <div class="alert alert-info shadow-sm">
+            No books found matching your criteria.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Title</th>
+                                <th>Description</th>
+                                <th>Author</th>
+                                <th>Publisher</th>
+                                <th>Price</th>
+                                <AuthorizeView>
+                                    <Authorized>
+                                        <th class="text-center" style="width: 160px;">Actions</th>
+                                    </Authorized>
+                                </AuthorizeView>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var book in books)
+                            {
+                                <tr class="align-middle">
+                                    <td class="fw-bold text-primary">@book.Title</td>
+                                    <td>@book.Description</td>
+                                    <td>@book.Author</td>
+                                    <td>@book.Publisher</td>
+                                    <td>$@book.Price.ToString("0.00")</td>
+                                    <AuthorizeView>
+                                        <Authorized>
+                                            <td class="text-center">
+                                                <div class="btn-group" role="group">
+                                                    <button class="btn btn-sm btn-outline-primary" @onclick="() => EditBook(book)">
+                                                        Edit
+                                                    </button>
+                                                    <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteBook(book)">
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </Authorized>
+                                    </AuthorizeView>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+<br />
+<br />
+
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private IEnumerable<BookDTO>? books;
+    private string searchType = "Title";
+    private string searchTerm = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBooks();
+    }
+
+    private async Task LoadBooks()
+    {
+        books = await BookService.GetAll();
+    }
+
+    private async Task SearchBooks()
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            await LoadBooks();
+            return;
+        }
+
+        books = null;
+
+        try
+        {
+            switch (searchType)
+            {
+                case "Title":
+                    books = await BookService.GetByTitle(searchTerm);
+                    break;
+                case "Author":
+                    books = await BookService.GetByAuthor(searchTerm);
+                    break;
+                case "Publisher":
+                default:
+                    books = await BookService.GetByPublisher(searchTerm);
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Search error: {ex.Message}");
+            books = Enumerable.Empty<BookDTO>();
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        searchTerm = string.Empty;
+        books = null;
+        await LoadBooks();
+    }
+
+    private async Task HandleKeyUp(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchBooks();
+        }
+    }
+
+    private void AddBook()
+    {
+        NavigationManager.NavigateTo("/books/add");
+    }
+
+    private void EditBook(BookDTO book)
+    {
+        NavigationManager.NavigateTo($"/books/edit/{book.Id}");
+    }
+
+    private async Task DeleteBook(BookDTO book)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>("confirm", $"Are you absolutely sure you want to delete '{book.Title}'?");
+
+        if (confirmed)
+        {
+            try
+            {
+                int modifiedById = 0;
+
+                // Extract the logged-in user's ID
+                if (AuthStateTask != null)
+                {
+                    var authState = await AuthStateTask;
+                    var user = authState.User;
+
+                    if (user.Identity is not null && user.Identity.IsAuthenticated)
+                    {
+                        var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                        int.TryParse(userIdString, out modifiedById);
+                    }
+                }
+
+                // Pass both the book ID and the user ID to the service
+                await BookService.DeleteBook(book.Id, modifiedById);
+
+                if (!string.IsNullOrWhiteSpace(searchTerm))
+                {
+                    await SearchBooks();
+                }
+                else
+                {
+                    await LoadBooks();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error deleting book: {ex.Message}");
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 ﻿using MovieManager.API.DTOs.MovieDTOs;
 
-namespace MovieManager.API.Services
+namespace MovieManager.API.Services.Interface
 {
     public interface iMovieService
     {

@@ -3,8 +3,9 @@ using MovieManager.API.DTOs.MovieDTOs;
 using MovieManager.API.Exceptions;
 using MovieManager.API.Models;
 using MovieManager.API.Persistence;
+using MovieManager.API.Services.Interface;
 
-namespace MovieManager.API.Services
+namespace MovieManager.API.Services.Implementation
 {
     public class MovieService : iMovieService
     {
@@ -227,7 +228,9 @@ namespace MovieManager.API.Services
                 ReleaseDate = movie.ReleaseDate,
                 Rating = movie.Rating,
                 CreatedDate = movie.CreatedDate,
-                ModifiedDate = movie.ModifiedDate
+                ModifiedDate = movie.ModifiedDate,
+                CreatedBy = movie.CreatedByUser?.Id ?? 0,
+                ModifiedBy = movie.ModifiedByUser?.Id ?? 0
             };
         }
 

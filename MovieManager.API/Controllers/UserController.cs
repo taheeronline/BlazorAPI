@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MovieManager.API.DTOs.UserDTOs; // Ensure this matches your DTO namespace
-using MovieManager.API.Services;
+using MovieManager.API.Services.Interface;
 
 namespace MovieManager.API.Controllers
 {
