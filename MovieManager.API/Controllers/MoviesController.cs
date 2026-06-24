@@ -1,6 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using MovieManager.API.DTOs.MovieDTOs;
+// Assuming PagedResult is in your DTOs or Models namespace. Add the correct using statement if different.
+// using MovieManager.API.Models; 
 using MovieManager.API.Services.Interface;
+using MovieManager.API.Wrapper;
 
 namespace MovieManager.API.Controllers
 {
@@ -28,19 +31,21 @@ namespace MovieManager.API.Controllers
         }
 
         /// <summary>
-        /// Gets all movies from the database.
+        /// Gets a paginated list of all movies from the database.
         /// </summary>
-        /// <returns>A collection of all movies.</returns>
-        /// <response code="200">Returns the list of all movies.</response>
+        /// <param name="page">The page number to retrieve (defaults to 1).</param>
+        /// <param name="pageSize">The number of records per page (defaults to 10).</param>
+        /// <returns>A paginated collection of all movies.</returns>
+        /// <response code="200">Returns the paginated list of all movies.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet]
-        [ProducesResponseType(typeof(IEnumerable<MovieDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResult<MovieDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<MovieDTO>>> GetAllMovies()
+        public async Task<ActionResult<PagedResult<MovieDTO>>> GetAllMovies([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            _logger.LogInformation("GET request: Retrieve all movies");
+            _logger.LogInformation("GET request: Retrieve all movies, Page: {Page}, Size: {PageSize}", page, pageSize);
 
-            var movies = await _movieService.GetAll();
+            var movies = await _movieService.GetAll(page, pageSize);
             return Ok(movies);
         }
 
@@ -91,6 +96,7 @@ namespace MovieManager.API.Controllers
         /// Deletes a movie from the database.
         /// </summary>
         /// <param name="id">The unique identifier of the movie to delete.</param>
+        /// <param name="modifiedById">The ID of the user performing the deletion.</param>
         /// <returns>No content response on successful deletion.</returns>
         /// <response code="204">Movie successfully deleted.</response>
         /// <response code="404">Movie not found.</response>
@@ -101,7 +107,7 @@ namespace MovieManager.API.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<IActionResult> DeleteMovie(int id, int modifiedById)
+        public async Task<IActionResult> DeleteMovie(int id, [FromQuery] int modifiedById)
         {
             _logger.LogInformation("DELETE request: Delete movie with ID {movieId}", id);
 
@@ -135,19 +141,21 @@ namespace MovieManager.API.Controllers
         /// Searches for movies by title (case-insensitive).
         /// </summary>
         /// <param name="title">The movie title or partial title to search for.</param>
-        /// <returns>A collection of movies matching the search title.</returns>
-        /// <response code="200">Returns the list of movies matching the search criteria.</response>
+        /// <param name="page">The page number to retrieve (defaults to 1).</param>
+        /// <param name="pageSize">The number of records per page (defaults to 10).</param>
+        /// <returns>A paginated collection of movies matching the search title.</returns>
+        /// <response code="200">Returns the paginated list of movies matching the search criteria.</response>
         /// <response code="400">Invalid search title provided.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet("search/title/{title}")]
-        [ProducesResponseType(typeof(IEnumerable<MovieDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResult<MovieDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<MovieDTO>>> SearchByTitle(string title)
+        public async Task<ActionResult<PagedResult<MovieDTO>>> SearchByTitle(string title, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            _logger.LogInformation("GET request: Search movies by title '{title}'", title);
+            _logger.LogInformation("GET request: Search movies by title '{title}', Page: {Page}, Size: {PageSize}", title, page, pageSize);
 
-            var movies = await _movieService.GetByTitle(title);
+            var movies = await _movieService.GetByTitle(title, page, pageSize);
             return Ok(movies);
         }
 
@@ -155,19 +163,21 @@ namespace MovieManager.API.Controllers
         /// Searches for movies by director name (case-insensitive).
         /// </summary>
         /// <param name="director">The director name to search for.</param>
-        /// <returns>A collection of movies by the specified director.</returns>
-        /// <response code="200">Returns the list of movies by the specified director.</response>
+        /// <param name="page">The page number to retrieve (defaults to 1).</param>
+        /// <param name="pageSize">The number of records per page (defaults to 10).</param>
+        /// <returns>A paginated collection of movies by the specified director.</returns>
+        /// <response code="200">Returns the paginated list of movies by the specified director.</response>
         /// <response code="400">Invalid director name provided.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet("search/director/{director}")]
-        [ProducesResponseType(typeof(IEnumerable<MovieDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResult<MovieDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<MovieDTO>>> SearchByDirector(string director)
+        public async Task<ActionResult<PagedResult<MovieDTO>>> SearchByDirector(string director, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            _logger.LogInformation("GET request: Search movies by director '{director}'", director);
+            _logger.LogInformation("GET request: Search movies by director '{director}', Page: {Page}, Size: {PageSize}", director, page, pageSize);
 
-            var movies = await _movieService.GetByDirector(director);
+            var movies = await _movieService.GetByDirector(director, page, pageSize);
             return Ok(movies);
         }
 
@@ -175,19 +185,21 @@ namespace MovieManager.API.Controllers
         /// Searches for movies by genre (case-insensitive).
         /// </summary>
         /// <param name="genre">The genre to search for.</param>
-        /// <returns>A collection of movies in the specified genre.</returns>
-        /// <response code="200">Returns the list of movies in the specified genre.</response>
+        /// <param name="page">The page number to retrieve (defaults to 1).</param>
+        /// <param name="pageSize">The number of records per page (defaults to 10).</param>
+        /// <returns>A paginated collection of movies in the specified genre.</returns>
+        /// <response code="200">Returns the paginated list of movies in the specified genre.</response>
         /// <response code="400">Invalid genre provided.</response>
         /// <response code="500">Internal server error occurred.</response>
         [HttpGet("search/genre/{genre}")]
-        [ProducesResponseType(typeof(IEnumerable<MovieDTO>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(PagedResult<MovieDTO>), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<MovieDTO>>> SearchByGenre(string genre)
+        public async Task<ActionResult<PagedResult<MovieDTO>>> SearchByGenre(string genre, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
-            _logger.LogInformation("GET request: Search movies by genre '{genre}'", genre);
+            _logger.LogInformation("GET request: Search movies by genre '{genre}', Page: {Page}, Size: {PageSize}", genre, page, pageSize);
 
-            var movies = await _movieService.GetByGenre(genre);
+            var movies = await _movieService.GetByGenre(genre, page, pageSize);
             return Ok(movies);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using MovieManager.BlazorUI.DTOs.MovieDTOs;
 using MovieManager.BlazorUI.Services.Interface;
+using MovieManager.BlazorUI.Wrapper;
 
 namespace MovieManager.BlazorUI.Services.Implementation
 {
@@ -11,12 +12,10 @@ namespace MovieManager.BlazorUI.Services.Implementation
         {
             _httpClient = httpClient;
         }
-        public async Task<IEnumerable<MovieDTO>> GetAll()
+        public async Task<PagedResult<MovieDTO>> GetAll(int page, int pageSize)
         {
-            var movies = await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>("api/movies");
-
-            // Returns the movies if not null, otherwise returns an empty collection
-            return movies ?? Enumerable.Empty<MovieDTO>();
+            var response = await _httpClient.GetFromJsonAsync<PagedResult<MovieDTO>>($"api/movies?page={page}&pageSize={pageSize}");
+            return response ?? new PagedResult<MovieDTO>();
         }
 
         public async Task<MovieDTO> CreateMovie(CreateMovieDTO createMovieDTO)
@@ -69,21 +68,27 @@ namespace MovieManager.BlazorUI.Services.Implementation
             // Send a DELETE request with the modifiedById as a query parameter
             return _httpClient.DeleteAsync($"api/movies/{id}?modifiedById={modifiedById}");
         }
-
-        public async Task<IEnumerable<MovieDTO>> GetByDirector(string director)
+        public async Task<PagedResult<MovieDTO>> GetByTitle(string title, int page = 1, int pageSize = 10)
         {
-            // Updated to match [HttpGet("search/director/{director}")]
-            return await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>($"api/movies/search/director/{Uri.EscapeDataString(director)}")
-                   ?? Enumerable.Empty<MovieDTO>();
+            // Appends page and pageSize to the query string
+            return await _httpClient.GetFromJsonAsync<PagedResult<MovieDTO>>(
+                $"api/movies/search/title/{Uri.EscapeDataString(title)}?page={page}&pageSize={pageSize}")
+                   ?? new PagedResult<MovieDTO>();
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetByGenre(string genre)
+        public async Task<PagedResult<MovieDTO>> GetByDirector(string director, int page = 1, int pageSize = 10)
         {
-            // Updated to match [HttpGet("search/genre/{genre}")]
-            return await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>($"api/movies/search/genre/{Uri.EscapeDataString(genre)}")
-                   ?? Enumerable.Empty<MovieDTO>();
+            return await _httpClient.GetFromJsonAsync<PagedResult<MovieDTO>>(
+                $"api/movies/search/director/{Uri.EscapeDataString(director)}?page={page}&pageSize={pageSize}")
+                   ?? new PagedResult<MovieDTO>();
         }
 
+        public async Task<PagedResult<MovieDTO>> GetByGenre(string genre, int page = 1, int pageSize = 10)
+        {
+            return await _httpClient.GetFromJsonAsync<PagedResult<MovieDTO>>(
+                $"api/movies/search/genre/{Uri.EscapeDataString(genre)}?page={page}&pageSize={pageSize}")
+                   ?? new PagedResult<MovieDTO>();
+        }
         public async Task<MovieDTO?> GetById(int id)
         {
             // This route matches [HttpGet("{id}")] exactly as before, 
@@ -92,12 +97,5 @@ namespace MovieManager.BlazorUI.Services.Implementation
             return movie ?? new MovieDTO();
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetByTitle(string title)
-        {
-            // Updated to match [HttpGet("search/title/{title}")]
-            // NOTE: Return type changed from MovieDTO to IEnumerable<MovieDTO>
-            return await _httpClient.GetFromJsonAsync<IEnumerable<MovieDTO>>($"api/movies/search/title/{Uri.EscapeDataString(title)}")
-                   ?? Enumerable.Empty<MovieDTO>();
-        }
     }
 }

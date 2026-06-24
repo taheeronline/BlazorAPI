@@ -32,7 +32,7 @@
                     <input type="text" class="form-control" placeholder="Enter search term..." @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleKeyUp" />
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button class="btn btn-secondary w-100" @onclick="SearchMovies">
+                    <button class="btn btn-secondary w-100" @onclick="ExecuteSearch">
                         <i class="bi bi-search"></i> Search
                     </button>
                     <button class="btn btn-outline-secondary w-100" @onclick="ClearSearch">
@@ -42,7 +42,8 @@
             </div>
         </div>
     </div>
-    @if (movies == null)
+
+    @if (pagedResult == null)
     {
         <div class="d-flex justify-content-center my-5">
             <div class="spinner-border text-primary" role="status">
@@ -50,7 +51,7 @@
             </div>
         </div>
     }
-    else if (!movies.Any())
+    else if (!pagedResult.Items.Any())
     {
         <div class="alert alert-info shadow-sm">
             No movies found matching your criteria.
@@ -64,20 +65,20 @@
                     <table class="table table-striped table-bordered mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>Title</th>
-                                <th>Director</th>
-                                <th>Genre</th>
-                                <th>Release Date</th>
-                                <th>Rating</th>
+                                <th style="width: 28%;">Title</th>
+                                <th style="width: 20%;">Director</th>
+                                <th style="width: 15%;">Genre</th>
+                                <th style="width: 15%;">Release Date</th>
+                                <th style="width: 10%;">Rating</th>
                                 <AuthorizeView>
                                     <Authorized>
-                                        <th class="text-center" style="width: 160px;">Actions</th>
+                                        <th class="text-center" style="width: 12%;">Actions</th>
                                     </Authorized>
                                 </AuthorizeView>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var movie in movies)
+                            @foreach (var movie in pagedResult.Items)
                             {
                                 <tr class="align-middle">
                                     <td class="fw-bold text-primary">@movie.Title</td>
@@ -109,6 +110,21 @@
                     </table>
                 </div>
             </div>
+
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <span class="text-muted fw-bold">
+                    Page @pagedResult.CurrentPage of @pagedResult.TotalPages
+                    <span class="fw-normal ms-2">(Total: @pagedResult.TotalCount records)</span>
+                </span>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-outline-primary" disabled="@(!pagedResult.HasPrevious)" @onclick="GoToPreviousPage">
+                        Previous
+                    </button>
+                    <button class="btn btn-outline-primary" disabled="@(!pagedResult.HasNext)" @onclick="GoToNextPage">
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     }
 </div>
@@ -119,9 +135,14 @@
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
-    private IEnumerable<MovieDTO>? movies;
+    // Replaced IEnumerable with PagedResult
+    private PagedResult<MovieDTO>? pagedResult;
     private string searchType = "Title";
     private string searchTerm = string.Empty;
+
+    // Pagination State
+    private int currentPage = 1;
+    private int pageSize = 10;
 
     protected override async Task OnInitializedAsync()
     {
@@ -130,10 +151,17 @@
 
     private async Task LoadMovies()
     {
-        movies = await MovieService.GetAll();
+        pagedResult = await MovieService.GetAll(currentPage, pageSize);
     }
 
-    private async Task SearchMovies()
+    // Wrapper to reset page when a fresh search is triggered
+    private async Task ExecuteSearch()
+    {
+        currentPage = 1;
+        await FetchData();
+    }
+
+    private async Task FetchData()
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
         {
@@ -141,35 +169,37 @@
             return;
         }
 
-        movies = null;
+        pagedResult = null;
 
         try
         {
+            // Note: Ensure these service methods are updated to accept and return paginated data
             switch (searchType)
             {
                 case "Director":
-                    movies = await MovieService.GetByDirector(searchTerm);
+                    pagedResult = await MovieService.GetByDirector(searchTerm, currentPage, pageSize);
                     break;
                 case "Genre":
-                    movies = await MovieService.GetByGenre(searchTerm);
+                    pagedResult = await MovieService.GetByGenre(searchTerm, currentPage, pageSize);
                     break;
                 case "Title":
                 default:
-                    movies = await MovieService.GetByTitle(searchTerm);
+                    pagedResult = await MovieService.GetByTitle(searchTerm, currentPage, pageSize);
                     break;
             }
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Search error: {ex.Message}");
-            movies = Enumerable.Empty<MovieDTO>();
+            pagedResult = new PagedResult<MovieDTO> { Items = Enumerable.Empty<MovieDTO>() };
         }
     }
 
     private async Task ClearSearch()
     {
         searchTerm = string.Empty;
-        movies = null;
+        currentPage = 1;
+        pagedResult = null;
         await LoadMovies();
     }
 
@@ -177,10 +207,30 @@
     {
         if (e.Key == "Enter")
         {
-            await SearchMovies();
+            await ExecuteSearch();
         }
     }
 
+    // --- Pagination Navigation ---
+    private async Task GoToPreviousPage()
+    {
+        if (pagedResult?.HasPrevious == true)
+        {
+            currentPage--;
+            await FetchData();
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (pagedResult?.HasNext == true)
+        {
+            currentPage++;
+            await FetchData();
+        }
+    }
+
+    // --- Actions ---
     private void AddMovie()
     {
         NavigationManager.NavigateTo("/movies/add");
@@ -201,7 +251,6 @@
             {
                 int modifiedById = 0;
 
-                // Extract the logged-in user's ID
                 if (AuthStateTask != null)
                 {
                     var authState = await AuthStateTask;
@@ -214,17 +263,10 @@
                     }
                 }
 
-                // Pass both the movie ID and the user ID to the service
                 await MovieService.DeleteMovie(movie.Id, modifiedById);
 
-                if (!string.IsNullOrWhiteSpace(searchTerm))
-                {
-                    await SearchMovies();
-                }
-                else
-                {
-                    await LoadMovies();
-                }
+                // Reload the current page
+                await FetchData();
             }
             catch (Exception ex)
             {

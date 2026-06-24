@@ -4,6 +4,7 @@ using MovieManager.API.Exceptions;
 using MovieManager.API.Models;
 using MovieManager.API.Persistence;
 using MovieManager.API.Services.Interface;
+using MovieManager.API.Wrapper;
 
 namespace MovieManager.API.Services.Implementation
 {
@@ -18,20 +19,37 @@ namespace MovieManager.API.Services.Implementation
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetAll()
+        public async Task<PagedResult<MovieDTO>> GetAll(int page, int pageSize)
         {
             try
             {
+                // 1. Count the total records BEFORE applying pagination
+                var totalCount = await _dbContext.Movies.CountAsync();
+
+                // 2. Fetch only the requested page of data, maintaining your sorting
                 var movies = await _dbContext.Movies
                     .AsNoTracking()
                     .OrderByDescending(m => m.CreatedDate)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
-                return MapMoviesToDtos(movies);
+                // 3. Map the retrieved database models to DTOs
+                var movieDtos = MapMoviesToDtos(movies);
+
+                // 4. Return the complete PagedResult package
+                return new PagedResult<MovieDTO>
+                {
+                    Items = movieDtos,
+                    TotalCount = totalCount,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving all movies.");
+                // Added the page number to the log for better debugging
+                _logger.LogError(ex, "Error occurred while retrieving movies for page {Page}.", page);
                 throw new MovieManagerException("Failed to retrieve movies. Please try again later.", 500);
             }
         }
@@ -148,71 +166,114 @@ namespace MovieManager.API.Services.Implementation
                 throw new MovieManagerException("Failed to delete movie.", 500);
             }
         }
-        
-        public async Task<IEnumerable<MovieDTO>> GetByTitle(string title)
+
+        public async Task<PagedResult<MovieDTO>> GetByTitle(string title, int page = 1, int pageSize = 10)
         {
             if (string.IsNullOrWhiteSpace(title)) throw new MovieValidationException("Search title cannot be empty.");
 
             try
             {
                 var searchPattern = $"%{title}%";
-                var movies = await _dbContext.Movies
+
+                // 1. Build the base filtered query
+                var query = _dbContext.Movies
                     .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Title, searchPattern))
+                    .Where(m => EF.Functions.Like(m.Title, searchPattern));
+
+                // 2. Count the total matching records before paginating
+                var totalCount = await query.CountAsync();
+
+                // 3. Apply sorting and pagination, then execute
+                var movies = await query
                     .OrderBy(m => m.Title)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
-                return MapMoviesToDtos(movies);
+                // 4. Return the complete package
+                return new PagedResult<MovieDTO>
+                {
+                    Items = MapMoviesToDtos(movies),
+                    TotalCount = totalCount,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by title.");
+                _logger.LogError(ex, "Error occurred searching movies by title for page {Page}.", page);
                 throw new MovieManagerException("Failed to search movies.", 500);
             }
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetByDirector(string director)
+        public async Task<PagedResult<MovieDTO>> GetByDirector(string director, int page = 1, int pageSize = 10)
         {
             if (string.IsNullOrWhiteSpace(director)) throw new MovieValidationException("Search director name cannot be empty.");
 
             try
             {
                 var searchPattern = $"%{director}%";
-                var movies = await _dbContext.Movies
+
+                var query = _dbContext.Movies
                     .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Director, searchPattern))
+                    .Where(m => EF.Functions.Like(m.Director, searchPattern));
+
+                var totalCount = await query.CountAsync();
+
+                var movies = await query
                     .OrderBy(m => m.Director)
                     .ThenBy(m => m.Title)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
-                return MapMoviesToDtos(movies);
+                return new PagedResult<MovieDTO>
+                {
+                    Items = MapMoviesToDtos(movies),
+                    TotalCount = totalCount,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by director.");
+                _logger.LogError(ex, "Error occurred searching movies by director for page {Page}.", page);
                 throw new MovieManagerException("Failed to search movies.", 500);
             }
         }
 
-        public async Task<IEnumerable<MovieDTO>> GetByGenre(string genre)
+        public async Task<PagedResult<MovieDTO>> GetByGenre(string genre, int page = 1, int pageSize = 10)
         {
             if (string.IsNullOrWhiteSpace(genre)) throw new MovieValidationException("Search genre cannot be empty.");
 
             try
             {
                 var searchPattern = $"%{genre}%";
-                var movies = await _dbContext.Movies
+
+                var query = _dbContext.Movies
                     .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Genre, searchPattern))
+                    .Where(m => EF.Functions.Like(m.Genre, searchPattern));
+
+                var totalCount = await query.CountAsync();
+
+                var movies = await query
                     .OrderBy(m => m.Genre)
                     .ThenBy(m => m.Title)
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
                     .ToListAsync();
 
-                return MapMoviesToDtos(movies);
+                return new PagedResult<MovieDTO>
+                {
+                    Items = MapMoviesToDtos(movies),
+                    TotalCount = totalCount,
+                    CurrentPage = page,
+                    PageSize = pageSize
+                };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by genre.");
+                _logger.LogError(ex, "Error occurred searching movies by genre for page {Page}.", page);
                 throw new MovieManagerException("Failed to search movies.", 500);
             }
         }
