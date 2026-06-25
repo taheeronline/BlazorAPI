@@ -28,13 +28,20 @@
 }
 
 .bi {
-    display: inline-block;
-    position: relative;
-    width: 1.25rem;
-    height: 1.25rem;
+    /* Use flexbox to perfectly center both font icons and SVGs */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* Set a slightly wider, uniform box so text aligns in a perfect vertical line */
+    width: 1.5rem;
+    height: 1.5rem;
     margin-right: 0.75rem;
-    top: -1px;
-    background-size: cover;
+    /* Sizing for standard font icons (bi-film, bi-people) */
+    font-size: 1.25rem;
+    /* Sizing for SVG background icons (Home, Plus, etc.) */
+    background-size: 1.25rem 1.25rem;
+    background-position: center;
+    background-repeat: no-repeat;
 }
 
 .bi-house-door-fill-nav-menu {
@@ -83,6 +90,7 @@
     background-color: rgba(255,255,255,0.1);
     color: white;
 }
+
 
 .nav-scrollable {
     display: none;
