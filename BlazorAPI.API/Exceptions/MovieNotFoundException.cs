@@ -3,7 +3,7 @@ namespace BlazorAPI.API.Exceptions
     /// <summary>
     /// Exception thrown when a requested movie is not found.
     /// </summary>
-    public class MovieNotFoundException : BlazorAPIException
+    public class MovieNotFoundException : MovieException
     {
         /// <summary>
         /// Initializes a new instance of the MovieNotFoundException class.

@@ -3,7 +3,7 @@ namespace BlazorAPI.API.Exceptions
     /// <summary>
     /// Exception thrown when movie data validation fails.
     /// </summary>
-    public class MovieValidationException : BlazorAPIException
+    public class MovieValidationException : MovieException
     {
         /// <summary>
         /// Gets the validation errors associated with this exception.

@@ -40,7 +40,7 @@ namespace BlazorAPI.API.Middleware
             {
                 MovieNotFoundException => (StatusCodes.Status404NotFound, "Not Found", exception.Message, null),
                 MovieValidationException ex => (StatusCodes.Status400BadRequest, "Validation Error", ex.Message, ex.Errors),
-                BlazorAPIException ex => (ex.StatusCode, GetExceptionTitle(ex.StatusCode), ex.Message, null),
+                MovieException ex => (ex.StatusCode, GetExceptionTitle(ex.StatusCode), ex.Message, null),
                 ArgumentException => (StatusCodes.Status400BadRequest, "Invalid Argument", exception.Message, null),
 
                 // Default fallback for unhandled errors

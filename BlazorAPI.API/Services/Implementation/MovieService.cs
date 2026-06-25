@@ -50,7 +50,7 @@ namespace BlazorAPI.API.Services.Implementation
             {
                 // Added the page number to the log for better debugging
                 _logger.LogError(ex, "Error occurred while retrieving movies for page {Page}.", page);
-                throw new BlazorAPIException("Failed to retrieve movies. Please try again later.", 500);
+                throw new MovieException("Failed to retrieve movies. Please try again later.", 500);
             }
         }
 
@@ -72,7 +72,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while retrieving movie with ID: {movieId}", id);
-                throw new BlazorAPIException("Failed to retrieve movie. Please try again later.", 500);
+                throw new MovieException("Failed to retrieve movie. Please try again later.", 500);
             }
         }
 
@@ -103,7 +103,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while creating movie.");
-                throw new BlazorAPIException("Failed to create movie.", 500);
+                throw new MovieException("Failed to create movie.", 500);
             }
         }
 
@@ -139,7 +139,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while updating movie with ID: {movieId}", id);
-                throw new BlazorAPIException("Failed to update movie.", 500);
+                throw new MovieException("Failed to update movie.", 500);
             }
         }
 
@@ -163,7 +163,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while deleting movie with ID: {movieId}", id);
-                throw new BlazorAPIException("Failed to delete movie.", 500);
+                throw new MovieException("Failed to delete movie.", 500);
             }
         }
 
@@ -202,7 +202,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred searching movies by title for page {Page}.", page);
-                throw new BlazorAPIException("Failed to search movies.", 500);
+                throw new MovieException("Failed to search movies.", 500);
             }
         }
 
@@ -238,7 +238,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred searching movies by director for page {Page}.", page);
-                throw new BlazorAPIException("Failed to search movies.", 500);
+                throw new MovieException("Failed to search movies.", 500);
             }
         }
 
@@ -274,7 +274,7 @@ namespace BlazorAPI.API.Services.Implementation
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred searching movies by genre for page {Page}.", page);
-                throw new BlazorAPIException("Failed to search movies.", 500);
+                throw new MovieException("Failed to search movies.", 500);
             }
         }
 
