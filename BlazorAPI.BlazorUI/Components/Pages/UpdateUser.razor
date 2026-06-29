@@ -1,6 +1,6 @@
 ﻿@page "/users/edit/{Id:int}"
 @rendermode InteractiveServer
-@inject iUserService UserService
+@inject IUserService UserService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Edit User</PageTitle>
@@ -102,7 +102,7 @@
     protected override async Task OnInitializedAsync()
     {
         // Fetch the existing user from the API to pre-fill the form
-        var existingUser = await UserService.GetById(Id);
+        var existingUser = await UserService.GetByIdAsync(Id);
 
         if (existingUser != null)
         {
@@ -142,7 +142,7 @@
             }
             if (editUser != null)
             {
-                await UserService.UpdateUser(Id, editUser);
+                await UserService.UpdateUserAsync(Id, editUser);
                 NavigationManager.NavigateTo("/users");
             }
         }

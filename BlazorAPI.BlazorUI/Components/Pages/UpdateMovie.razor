@@ -1,6 +1,6 @@
 ﻿@page "/movies/edit/{Id:int}"
 @rendermode InteractiveServer
-@inject iMovieService MovieService
+@inject IMovieService MovieService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Edit Movie</PageTitle>
@@ -89,7 +89,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var existingMovie = await MovieService.GetById(Id);
+        var existingMovie = await MovieService.GetByIdAsync(Id);
 
         if (existingMovie != null)
         {
@@ -127,7 +127,7 @@
                     }
                 }
 
-                await MovieService.UpdateMovie(Id, editMovie);
+                await MovieService.UpdateMovieAsync(Id, editMovie);
                 NavigationManager.NavigateTo("/movies");
             }
         }

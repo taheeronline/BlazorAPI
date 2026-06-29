@@ -1,6 +1,6 @@
 ﻿@page "/books/edit/{Id:int}"
 @rendermode InteractiveServer
-@inject iBookService BookService
+@inject IBookService BookService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Edit Book</PageTitle>
@@ -89,7 +89,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var existingBook = await BookService.GetById(Id);
+        var existingBook = await BookService.GetByIdAsync(Id);
 
         if (existingBook != null)
         {
@@ -127,7 +127,7 @@
                     }
                 }
 
-                await BookService.UpdateBook(Id, editBook);
+                await BookService.UpdateBookAsync(Id, editBook);
                 NavigationManager.NavigateTo("/books");
             }
         }

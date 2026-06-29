@@ -1,6 +1,6 @@
 ﻿@page "/movies/add"
 @rendermode InteractiveServer
-@inject iMovieService MovieService
+@inject IMovieService MovieService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Add New Movie</PageTitle>
@@ -101,7 +101,7 @@
         }
 
         // Call your API service to save the data
-        await MovieService.CreateMovie(newMovie);
+        await MovieService.CreateMovieAsync(newMovie);
 
         // Once saved successfully, redirect back to the movie list
         NavigationManager.NavigateTo("/movies");

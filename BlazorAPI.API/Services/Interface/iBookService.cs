@@ -1,17 +1,18 @@
 ﻿using BlazorAPI.API.DTOs.BookDTO;
+using BlazorAPI.API.Wrapper;
 
 namespace BlazorAPI.API.Services.Interface
 {
-    public interface iBookService
+    public interface IBookService
     {
-        public Task<IEnumerable<BookDTO>> GetAll();
-        public Task<BookDTO> GetById(int id);
-        public Task<BookDTO> CreateBook(CreateBookDTO createBookDTO);
-        public Task<BookDTO> UpdateBook(int id, UpdateBookDTO updateBookDTO);
-        public Task<bool> DeleteBook(int id, int modifiedById);
-        public Task<IEnumerable<BookDTO>> GetByTitle(string title);
-        public Task<IEnumerable<BookDTO>> GetByAuthor(string author);
-        public Task<IEnumerable<BookDTO>> GetByPublisher(string publisher);
+        Task<PagedResult<BookDTO>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<BookDTO> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<BookDTO> CreateBookAsync(CreateBookDTO createBookDTO, CancellationToken cancellationToken = default);
+        Task<BookDTO> UpdateBookAsync(int id, UpdateBookDTO updateBookDTO, CancellationToken cancellationToken = default);
+        Task DeleteBookAsync(int id, int modifiedById, CancellationToken cancellationToken = default);
+        Task<PagedResult<BookDTO>> GetByTitleAsync(string title, int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<BookDTO>> GetByAuthorAsync(string author, int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<PagedResult<BookDTO>> GetByPublisherAsync(string publisher, int page, int pageSize, CancellationToken cancellationToken = default);
 
     }
 }

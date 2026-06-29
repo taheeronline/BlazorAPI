@@ -1,6 +1,6 @@
 ﻿@page "/login"
 @rendermode InteractiveServer
-@inject iUserService UserService
+@inject IUserService UserService
 @inject CustomAuthStateProvider CustomAuthStateProvider
 @inject NavigationManager NavigationManager
 
@@ -69,7 +69,7 @@
 
         try
         {
-            var user = await UserService.Login(loginModel);
+            var user = await UserService.LoginAsync(loginModel);
 
             if (user != null)
             {

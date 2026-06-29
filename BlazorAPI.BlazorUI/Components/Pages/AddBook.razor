@@ -1,6 +1,6 @@
 ﻿@page "/books/add"
 @rendermode InteractiveServer
-@inject iBookService BookService
+@inject IBookService BookService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Add New Book</PageTitle>
@@ -85,7 +85,7 @@
         }
 
         // Call your API service to save the data
-        await BookService.CreateBook(newBook);
+        await BookService.CreateBookAsync(newBook);
 
         // Once saved successfully, redirect back to the book list
         NavigationManager.NavigateTo("/books");

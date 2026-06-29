@@ -1,16 +1,17 @@
 ﻿using BlazorAPI.API.DTOs.UserDTOs;
+using BlazorAPI.API.Wrapper;
 
 namespace BlazorAPI.API.Services.Interface
 
 {
-    public interface iUserService
+    public interface IUserService
     {
-        Task<IEnumerable<UserDTO>> GetAll();
-        Task<UserDTO?> GetById(int id);
-        Task<UserDTO?> GetByEmail(string email);
-        Task<UserDTO> CreateUser(CreateUserDTO createDTO);
-        Task UpdateUser(int id, UpdateUserDTO updateDTO);
-        Task DeleteUser(int id, int modifiedById);
-        Task<UserDTO?> Login(LoginDTO loginDTO);
+        Task<PagedResult<UserDTO>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+        Task<UserDTO?> GetByIdAsync(int id, CancellationToken cancellationToken = default);
+        Task<UserDTO?> GetByEmailAsync(string email, CancellationToken cancellationToken = default);
+        Task<UserDTO> CreateUserAsync(CreateUserDTO createDTO, CancellationToken cancellationToken = default);
+        Task<UserDTO> UpdateUserAsync(int id, UpdateUserDTO updateDTO, CancellationToken cancellationToken = default);
+        Task DeleteUserAsync(int id, int modifiedById, CancellationToken cancellationToken = default);
+        Task<UserDTO?> LoginAsync(LoginDTO loginDTO, CancellationToken cancellationToken = default);
     }
 }

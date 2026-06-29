@@ -1,6 +1,6 @@
 ﻿@page "/register"
 @rendermode InteractiveServer
-@inject iUserService UserService
+@inject IUserService UserService
 @inject NavigationManager NavigationManager
 
 <PageTitle>Register Account</PageTitle>
@@ -107,7 +107,7 @@
             }
 
             // 2. Call your API service to create the user
-            var success = await UserService.CreateUser(registerModel);
+            var success = await UserService.CreateUserAsync(registerModel);
 
             // 3. Redirect on success
             NavigationManager.NavigateTo("/");

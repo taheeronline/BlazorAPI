@@ -22,18 +22,18 @@ builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
 var apiBaseAddress = new Uri("http://localhost:5212/");
 
 // Register MovieService
-builder.Services.AddHttpClient<iMovieService, MovieService>(client =>
+builder.Services.AddHttpClient<IMovieService, MovieService>(client =>
 {
     client.BaseAddress = apiBaseAddress;
 });
 
-builder.Services.AddHttpClient<iBookService, BookService>(client =>
+builder.Services.AddHttpClient<IBookService, BookService>(client =>
 {
     client.BaseAddress = apiBaseAddress;
 });
 
 // Register UserService (NEW)
-builder.Services.AddHttpClient<iUserService, UserService>(client =>
+builder.Services.AddHttpClient<IUserService, UserService>(client =>
 {
     client.BaseAddress = apiBaseAddress;
 });

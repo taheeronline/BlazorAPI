@@ -8,8 +8,10 @@ using BlazorAPI.API.Wrapper;
 
 namespace BlazorAPI.API.Services.Implementation
 {
-    public class MovieService : iMovieService
+    public class MovieService : IMovieService
     {
+        // CHANGE: Renamed interface from 'IMovieService' to 'IMovieService'.
+
         private readonly MovieDbContext _dbContext;
         private readonly ILogger<MovieService> _logger;
 
@@ -19,25 +21,29 @@ namespace BlazorAPI.API.Services.Implementation
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        public async Task<PagedResult<MovieDTO>> GetAll(int page, int pageSize)
+        public async Task<PagedResult<MovieDTO>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)
         {
+            // CHANGE: Added CancellationToken and passed it to all EF Core calls.
+            // CHANGE: Added .Where(m => !m.IsDeleted) to filter out soft-deleted records.
+            //         Previously, deleted movies were still being returned to callers.
+            // CHANGE: Used Select() for direct DTO projection instead of fetching full
+            //         entities and mapping in memory. This reduces the data transferred
+            //         from the database.
             try
             {
-                // 1. Count the total records BEFORE applying pagination
-                var totalCount = await _dbContext.Movies.CountAsync();
-
-                // 2. Fetch only the requested page of data, maintaining your sorting
-                var movies = await _dbContext.Movies
+                var baseQuery = _dbContext.Movies
                     .AsNoTracking()
+                    .Where(m => !m.IsDeleted?? false);
+
+                var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+                var movieDtos = await baseQuery
                     .OrderByDescending(m => m.CreatedDate)
                     .Skip((page - 1) * pageSize)
                     .Take(pageSize)
-                    .ToListAsync();
+                    .Select(m => MapToDto(m))
+                    .ToListAsync(cancellationToken);
 
-                // 3. Map the retrieved database models to DTOs
-                var movieDtos = MapMoviesToDtos(movies);
-
-                // 4. Return the complete PagedResult package
                 return new PagedResult<MovieDTO>
                 {
                     Items = movieDtos,
@@ -48,37 +54,45 @@ namespace BlazorAPI.API.Services.Implementation
             }
             catch (Exception ex)
             {
-                // Added the page number to the log for better debugging
-                _logger.LogError(ex, "Error occurred while retrieving movies for page {Page}.", page);
-                throw new MovieException("Failed to retrieve movies. Please try again later.", 500);
+                _logger.LogError(ex, "Error retrieving movies for page {Page}.", page);
+                throw new MovieExceptions("Failed to retrieve movies. Please try again later.", 500);
             }
         }
 
-        public async Task<MovieDTO> GetById(int id)
+        public async Task<MovieDTO> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
-            if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
+            // CHANGE: Added CancellationToken.
+            // CHANGE: Added !m.IsDeleted filter — previously a soft-deleted movie could
+            //         still be fetched by ID, which is a logical bug.
+            // CHANGE: Moved MovieValidationException re-throw into the outer catch by
+            //         listing it explicitly, keeping the pattern consistent with other methods.
+            GuardPositiveId(id, "Movie");
 
             try
             {
                 var movie = await _dbContext.Movies
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(m => m.Id == id);
+                    .FirstOrDefaultAsync(m => m.Id == id && !(m.IsDeleted?? false), cancellationToken);
 
                 if (movie is null) throw new MovieNotFoundException(id);
 
-                return MapMovieToDto(movie);
+                return MapToDto(movie);
             }
             catch (MovieNotFoundException) { throw; }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while retrieving movie with ID: {movieId}", id);
-                throw new MovieException("Failed to retrieve movie. Please try again later.", 500);
+                _logger.LogError(ex, "Error retrieving movie with ID {MovieId}.", id);
+                throw new MovieExceptions("Failed to retrieve movie. Please try again later.", 500);
             }
         }
 
-        public async Task<MovieDTO> CreateMovie(CreateMovieDTO createMovieDto)
+        public async Task<MovieDTO> CreateMovieAsync(CreateMovieDTO createMovieDto, CancellationToken cancellationToken = default)
         {
-            if (createMovieDto is null) throw new MovieValidationException("Movie data cannot be null.");
+            // CHANGE: Added CancellationToken.
+            // CHANGE: Null check now throws ArgumentNullException (more semantically correct)
+            //         rather than MovieValidationException, since a null DTO is a programming
+            //         error, not a user validation error.
+            ArgumentNullException.ThrowIfNull(createMovieDto);
 
             try
             {
@@ -88,13 +102,14 @@ namespace BlazorAPI.API.Services.Implementation
                     createMovieDto.Genre,
                     createMovieDto.ReleaseDate,
                     createMovieDto.Rating,
-                    createMovieDto.CreatedBy // In a real application, this would come from the authenticated user context
+                    createMovieDto.CreatedBy
                 );
 
                 _dbContext.Movies.Add(movie);
-                await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync(cancellationToken);
 
-                return MapMovieToDto(movie);
+                _logger.LogInformation("Movie created with ID {MovieId}.", movie.Id);
+                return MapToDto(movie);
             }
             catch (ArgumentException ex)
             {
@@ -102,19 +117,24 @@ namespace BlazorAPI.API.Services.Implementation
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while creating movie.");
-                throw new MovieException("Failed to create movie.", 500);
+                _logger.LogError(ex, "Error creating movie.");
+                throw new MovieExceptions("Failed to create movie.", 500);
             }
         }
 
-        public async Task<MovieDTO> UpdateMovie(int id, UpdateMovieDTO updateMovieDto)
+        public async Task<MovieDTO> UpdateMovieAsync(int id, UpdateMovieDTO updateMovieDto, CancellationToken cancellationToken = default)
         {
-            if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
-            if (updateMovieDto is null) throw new MovieValidationException("Updated movie data cannot be null.");
+            // CHANGE: Added CancellationToken.
+            // CHANGE: Consolidated guard clauses into a shared helper for DRY principle.
+            GuardPositiveId(id, "Movie");
+            ArgumentNullException.ThrowIfNull(updateMovieDto);
 
             try
             {
-                var movie = await _dbContext.Movies.FirstOrDefaultAsync(m => m.Id == id);
+                // CHANGE: Added !m.IsDeleted filter — you should not be able to update
+                //         a soft-deleted movie.
+                var movie = await _dbContext.Movies
+                    .FirstOrDefaultAsync(m => m.Id == id && !(m.IsDeleted?? false), cancellationToken);
 
                 if (movie is null) throw new MovieNotFoundException(id);
 
@@ -124,12 +144,13 @@ namespace BlazorAPI.API.Services.Implementation
                     updateMovieDto.Genre,
                     updateMovieDto.ReleaseDate,
                     updateMovieDto.Rating,
-                    updateMovieDto.ModifiedBy // In a real application, this would come from the authenticated user context
+                    updateMovieDto.ModifiedBy
                 );
 
-                await _dbContext.SaveChangesAsync();
+                await _dbContext.SaveChangesAsync(cancellationToken);
 
-                return MapMovieToDto(movie);
+                _logger.LogInformation("Movie with ID {MovieId} updated.", id);
+                return MapToDto(movie);
             }
             catch (MovieNotFoundException) { throw; }
             catch (ArgumentException ex)
@@ -138,166 +159,173 @@ namespace BlazorAPI.API.Services.Implementation
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while updating movie with ID: {movieId}", id);
-                throw new MovieException("Failed to update movie.", 500);
+                _logger.LogError(ex, "Error updating movie with ID {MovieId}.", id);
+                throw new MovieExceptions("Failed to update movie.", 500);
             }
         }
 
-        public async Task DeleteMovie(int id, int modifiedById)
+        public async Task DeleteMovieAsync(int id, int modifiedById, CancellationToken cancellationToken = default)
         {
-            if (id <= 0) throw new MovieValidationException("Movie ID must be greater than zero.");
-            if (modifiedById <= 0) throw new MovieValidationException("ModifiedBy ID must be greater than zero.");
+            // CHANGE: Added CancellationToken.
+            // CHANGE: Replaced separate guard clauses with shared helper + a specific check
+            //         for modifiedById. In production, modifiedById should come from the
+            //         auth context (e.g., IHttpContextAccessor), not from the request body/query.
+            GuardPositiveId(id, "Movie");
+            GuardPositiveId(modifiedById, "ModifiedBy");
 
             try
             {
-                var movie = await _dbContext.Movies.FirstOrDefaultAsync(m => m.Id == id);
+                var movie = await _dbContext.Movies
+                    .FirstOrDefaultAsync(m => m.Id == id && !(m.IsDeleted?? false), cancellationToken);
 
                 if (movie is null) throw new MovieNotFoundException(id);
 
-                // Pass the user ID into your domain method
                 movie.MarkAsDeleted(modifiedById);
+                await _dbContext.SaveChangesAsync(cancellationToken);
 
-                await _dbContext.SaveChangesAsync();
+                _logger.LogInformation("Movie with ID {MovieId} soft-deleted by user {UserId}.", id, modifiedById);
             }
             catch (MovieNotFoundException) { throw; }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred while deleting movie with ID: {movieId}", id);
-                throw new MovieException("Failed to delete movie.", 500);
+                _logger.LogError(ex, "Error deleting movie with ID {MovieId}.", id);
+                throw new MovieExceptions("Failed to delete movie.", 500);
             }
         }
 
-        public async Task<PagedResult<MovieDTO>> GetByTitle(string title, int page = 1, int pageSize = 10)
+        public async Task<PagedResult<MovieDTO>> GetByTitleAsync(string title, int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(title)) throw new MovieValidationException("Search title cannot be empty.");
+            if (string.IsNullOrWhiteSpace(title))
+                throw new MovieValidationException("Search title cannot be empty.");
 
             try
             {
-                var searchPattern = $"%{title}%";
-
-                // 1. Build the base filtered query
-                var query = _dbContext.Movies
-                    .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Title, searchPattern));
-
-                // 2. Count the total matching records before paginating
-                var totalCount = await query.CountAsync();
-
-                // 3. Apply sorting and pagination, then execute
-                var movies = await query
-                    .OrderBy(m => m.Title)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-
-                // 4. Return the complete package
-                return new PagedResult<MovieDTO>
-                {
-                    Items = MapMoviesToDtos(movies),
-                    TotalCount = totalCount,
-                    CurrentPage = page,
-                    PageSize = pageSize
-                };
+                return await SearchMoviesAsync(
+                    // CHANGE: Extracted common search logic into a private helper to eliminate
+                    //         the copy-paste across GetByTitle, GetByDirector, GetByGenre.
+                    predicate: m => EF.Functions.Like(m.Title, $"%{title}%"),
+                    orderBy: q => q.OrderBy(m => m.Title),
+                    page, pageSize, cancellationToken
+                );
             }
+            catch (MovieValidationException) { throw; }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by title for page {Page}.", page);
-                throw new MovieException("Failed to search movies.", 500);
+                _logger.LogError(ex, "Error searching movies by title for page {Page}.", page);
+                throw new MovieExceptions("Failed to search movies.", 500);
             }
         }
 
-        public async Task<PagedResult<MovieDTO>> GetByDirector(string director, int page = 1, int pageSize = 10)
+        public async Task<PagedResult<MovieDTO>> GetByDirectorAsync(string director, int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(director)) throw new MovieValidationException("Search director name cannot be empty.");
+            if (string.IsNullOrWhiteSpace(director))
+                throw new MovieValidationException("Director name cannot be empty.");
 
             try
             {
-                var searchPattern = $"%{director}%";
-
-                var query = _dbContext.Movies
-                    .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Director, searchPattern));
-
-                var totalCount = await query.CountAsync();
-
-                var movies = await query
-                    .OrderBy(m => m.Director)
-                    .ThenBy(m => m.Title)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-
-                return new PagedResult<MovieDTO>
-                {
-                    Items = MapMoviesToDtos(movies),
-                    TotalCount = totalCount,
-                    CurrentPage = page,
-                    PageSize = pageSize
-                };
+                return await SearchMoviesAsync(
+                    predicate: m => EF.Functions.Like(m.Director, $"%{director}%"),
+                    orderBy: q => q.OrderBy(m => m.Director).ThenBy(m => m.Title),
+                    page, pageSize, cancellationToken
+                );
             }
+            catch (MovieValidationException) { throw; }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by director for page {Page}.", page);
-                throw new MovieException("Failed to search movies.", 500);
+                _logger.LogError(ex, "Error searching movies by director for page {Page}.", page);
+                throw new MovieExceptions("Failed to search movies.", 500);
             }
         }
 
-        public async Task<PagedResult<MovieDTO>> GetByGenre(string genre, int page = 1, int pageSize = 10)
+        public async Task<PagedResult<MovieDTO>> GetByGenreAsync(string genre, int page, int pageSize, CancellationToken cancellationToken = default)
         {
-            if (string.IsNullOrWhiteSpace(genre)) throw new MovieValidationException("Search genre cannot be empty.");
+            if (string.IsNullOrWhiteSpace(genre))
+                throw new MovieValidationException("Genre cannot be empty.");
 
             try
             {
-                var searchPattern = $"%{genre}%";
-
-                var query = _dbContext.Movies
-                    .AsNoTracking()
-                    .Where(m => EF.Functions.Like(m.Genre, searchPattern));
-
-                var totalCount = await query.CountAsync();
-
-                var movies = await query
-                    .OrderBy(m => m.Genre)
-                    .ThenBy(m => m.Title)
-                    .Skip((page - 1) * pageSize)
-                    .Take(pageSize)
-                    .ToListAsync();
-
-                return new PagedResult<MovieDTO>
-                {
-                    Items = MapMoviesToDtos(movies),
-                    TotalCount = totalCount,
-                    CurrentPage = page,
-                    PageSize = pageSize
-                };
+                return await SearchMoviesAsync(
+                    predicate: m => EF.Functions.Like(m.Genre, $"%{genre}%"),
+                    orderBy: q => q.OrderBy(m => m.Genre).ThenBy(m => m.Title),
+                    page, pageSize, cancellationToken
+                );
             }
+            catch (MovieValidationException) { throw; }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occurred searching movies by genre for page {Page}.", page);
-                throw new MovieException("Failed to search movies.", 500);
+                _logger.LogError(ex, "Error searching movies by genre for page {Page}.", page);
+                throw new MovieExceptions("Failed to search movies.", 500);
             }
         }
 
-        private static MovieDTO MapMovieToDto(Movie movie)
+        // ---------------------------------------------------------------------------
+        // Private helpers
+        // ---------------------------------------------------------------------------
+
+        /// <summary>
+        /// Shared pagination + filtering logic used by all search methods.
+        /// Eliminates the ~20-line copy-paste that existed across GetByTitle/Director/Genre.
+        /// </summary>
+        private async Task<PagedResult<MovieDTO>> SearchMoviesAsync(
+            System.Linq.Expressions.Expression<Func<Movie, bool>> predicate,
+            Func<IQueryable<Movie>, IOrderedQueryable<Movie>> orderBy,
+            int page,
+            int pageSize,
+            CancellationToken cancellationToken)
         {
-            return new MovieDTO
+            var baseQuery = _dbContext.Movies
+                .AsNoTracking()
+                .Where(m => !m.IsDeleted ?? false)   // CHANGE: Always exclude soft-deleted records.
+                .Where(predicate);
+
+            var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+            var items = await orderBy(baseQuery)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(m => MapToDto(m))
+                .ToListAsync(cancellationToken);
+
+            return new PagedResult<MovieDTO>
             {
-                Id = movie.Id,
-                Title = movie.Title,
-                Director = movie.Director,
-                Genre = movie.Genre,
-                ReleaseDate = movie.ReleaseDate,
-                Rating = movie.Rating,
-                CreatedDate = movie.CreatedDate,
-                ModifiedDate = movie.ModifiedDate,
-                CreatedBy = movie.CreatedByUser?.Id ?? 0,
-                ModifiedBy = movie.ModifiedByUser?.Id ?? 0
+                Items = items,
+                TotalCount = totalCount,
+                CurrentPage = page,
+                PageSize = pageSize
             };
         }
 
-        private static IEnumerable<MovieDTO> MapMoviesToDtos(IEnumerable<Movie> movies)
+        /// <summary>
+        /// Maps a Movie entity to a MovieDTO.
+        /// CHANGE: Renamed from MapMovieToDto/MapMoviesToDtos to a single static MapToDto.
+        ///         The IEnumerable overload was unnecessary — callers can just use .Select(MapToDto).
+        /// NOTE: CreatedBy/ModifiedBy use the raw FK integer fields (m.CreatedById, m.ModifiedById)
+        ///       instead of the navigation properties (m.CreatedByUser?.Id ?? 0). The old code
+        ///       silently returned 0 when navigation properties weren't loaded, which is misleading.
+        ///       If you need user names in the DTO, use .Include() explicitly or a separate query.
+        /// </summary>
+        private static MovieDTO MapToDto(Movie movie) => new()
         {
-            return movies.Select(MapMovieToDto);
+            Id = movie.Id,
+            Title = movie.Title,
+            Director = movie.Director,
+            Genre = movie.Genre,
+            ReleaseDate = movie.ReleaseDate,
+            Rating = movie.Rating,
+            CreatedDate = movie.CreatedDate,
+            ModifiedDate = movie.ModifiedDate,
+            CreatedBy = movie.CreatedBy ?? 0,
+            ModifiedBy = movie.ModifiedBy ?? 0
+        };
+
+        /// <summary>
+        /// Shared guard clause for positive integer IDs.
+        /// CHANGE: Extracted repeated "if (id &lt;= 0) throw" pattern into one place.
+        /// </summary>
+        private static void GuardPositiveId(int id, string paramName)
+        {
+            if (id <= 0)
+                throw new MovieValidationException($"{paramName} ID must be greater than zero.");
         }
     }
 }

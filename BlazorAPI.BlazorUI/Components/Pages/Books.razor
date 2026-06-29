@@ -1,6 +1,6 @@
 ﻿@page "/books"
 @rendermode InteractiveServer
-@inject iBookService BookService
+@inject BlazorAPI.BlazorUI.Services.Interface.IBookService BookService
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JS
 
@@ -8,7 +8,7 @@
 
 <div class="container-fluid mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="bi bi-book-half"></i> Book(s) Library</h2>
+        <h2><i class="bi bi-book-half"></i> Book Library</h2>
         <AuthorizeView>
             <Authorized>
                 <button class="btn btn-primary shadow-sm" @onclick="AddBook">
@@ -32,7 +32,7 @@
                     <input type="text" class="form-control" placeholder="Enter search term..." @bind="searchTerm" @bind:event="oninput" @onkeyup="HandleKeyUp" />
                 </div>
                 <div class="col-md-3 d-flex gap-2">
-                    <button class="btn btn-secondary w-100" @onclick="SearchBooks">
+                    <button class="btn btn-secondary w-100" @onclick="ExecuteSearch">
                         <i class="bi bi-search"></i> Search
                     </button>
                     <button class="btn btn-outline-secondary w-100" @onclick="ClearSearch">
@@ -42,7 +42,8 @@
             </div>
         </div>
     </div>
-    @if (books == null)
+
+    @if (isLoading)
     {
         <div class="d-flex justify-content-center my-5">
             <div class="spinner-border text-primary" role="status">
@@ -50,7 +51,13 @@
             </div>
         </div>
     }
-    else if (!books.Any())
+    else if (errorMessage != null)
+    {
+        <div class="alert alert-danger shadow-sm">
+            @errorMessage
+        </div>
+    }
+    else if (pagedResult == null || !pagedResult.Items.Any())
     {
         <div class="alert alert-info shadow-sm">
             No books found matching your criteria.
@@ -64,24 +71,28 @@
                     <table class="table table-striped table-bordered mb-0">
                         <thead class="table-dark">
                             <tr>
-                                <th>Title</th>
-                                <th>Description</th>
-                                <th>Author</th>
-                                <th>Publisher</th>
-                                <th>Price</th>
+                                <th style="width: 25%;">Title</th>
+                                <th style="width: 30%;">Description</th>
+                                <th style="width: 15%;">Author</th>
+                                <th style="width: 10%;">Publisher</th>
+                                <th style="width: 8%;">Price</th>
                                 <AuthorizeView>
                                     <Authorized>
-                                        <th class="text-center" style="width: 160px;">Actions</th>
+                                        <th class="text-center" style="width: 12%;">Actions</th>
                                     </Authorized>
                                 </AuthorizeView>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var book in books)
+                            @foreach (var book in pagedResult.Items)
                             {
                                 <tr class="align-middle">
                                     <td class="fw-bold text-primary">@book.Title</td>
-                                    <td>@book.Description</td>
+                                    <td>
+                                        <span class="text-truncate d-inline-block" style="max-width: 250px;" title="@book.Description">
+                                            @book.Description
+                                        </span>
+                                    </td>
                                     <td>@book.Author</td>
                                     <td>@book.Publisher</td>
                                     <td>$@book.Price.ToString("0.00")</td>
@@ -105,6 +116,20 @@
                     </table>
                 </div>
             </div>
+            <div class="card-footer bg-white d-flex justify-content-between align-items-center py-3">
+                <span class="text-muted fw-bold">
+                    Page @pagedResult.CurrentPage of @pagedResult.TotalPages
+                    <span class="fw-normal ms-2">(Total: @pagedResult.TotalCount records)</span>
+                </span>
+                <div class="btn-group shadow-sm">
+                    <button class="btn btn-outline-primary" disabled="@(!pagedResult.HasPrevious)" @onclick="GoToPreviousPage">
+                        Previous
+                    </button>
+                    <button class="btn btn-outline-primary" disabled="@(!pagedResult.HasNext)" @onclick="GoToNextPage">
+                        Next
+                    </button>
+                </div>
+            </div>
         </div>
     }
 </div>
@@ -115,67 +140,109 @@
     [CascadingParameter]
     private Task<AuthenticationState>? AuthStateTask { get; set; }
 
-    private IEnumerable<BookDTO>? books;
+    private PagedResult<BookDTO>? pagedResult;
     private string searchType = "Title";
     private string searchTerm = string.Empty;
+    private bool isLoading = true;
+    private string? errorMessage;
+
+    // Pagination State
+    private int currentPage = 1;
+    private int pageSize = 5;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadBooks();
+        await FetchData();
     }
 
-    private async Task LoadBooks()
+    private async Task ExecuteSearch()
     {
-        books = await BookService.GetAll();
+        currentPage = 1;
+        await FetchData();
     }
 
-    private async Task SearchBooks()
+    private async Task FetchData()
     {
-        if (string.IsNullOrWhiteSpace(searchTerm))
-        {
-            await LoadBooks();
-            return;
-        }
-
-        books = null;
+        isLoading = true;
+        errorMessage = null;
 
         try
         {
-            switch (searchType)
+            if (string.IsNullOrWhiteSpace(searchTerm))
             {
-                case "Title":
-                    books = await BookService.GetByTitle(searchTerm);
-                    break;
-                case "Author":
-                    books = await BookService.GetByAuthor(searchTerm);
-                    break;
-                case "Publisher":
-                default:
-                    books = await BookService.GetByPublisher(searchTerm);
-                    break;
+                pagedResult = await BookService.GetAllAsync(currentPage, pageSize);
             }
+            else
+            {
+                switch (searchType)
+                {
+                    case "Author":
+                        pagedResult = await BookService.GetByAuthorAsync(searchTerm, currentPage, pageSize);
+                        break;
+                    case "Publisher":
+                        pagedResult = await BookService.GetByPublisherAsync(searchTerm, currentPage, pageSize);
+                        break;
+                    case "Title":
+                    default:
+                        pagedResult = await BookService.GetByTitleAsync(searchTerm, currentPage, pageSize);
+                        break;
+                }
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            Console.WriteLine($"Network or API error: {ex.Message}");
+            errorMessage = "Failed to communicate with the server. Please try again.";
+            pagedResult = new PagedResult<BookDTO> { Items = Enumerable.Empty<BookDTO>() };
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Search error: {ex.Message}");
-            books = Enumerable.Empty<BookDTO>();
+            Console.WriteLine($"Unexpected error: {ex.Message}");
+            errorMessage = "An unexpected error occurred while loading data.";
+            pagedResult = new PagedResult<BookDTO> { Items = Enumerable.Empty<BookDTO>() };
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
     private async Task ClearSearch()
     {
         searchTerm = string.Empty;
-        books = null;
-        await LoadBooks();
+        currentPage = 1;
+        await FetchData();
     }
 
     private async Task HandleKeyUp(KeyboardEventArgs e)
     {
         if (e.Key == "Enter")
         {
-            await SearchBooks();
+            await ExecuteSearch();
         }
     }
+
+    // --- Pagination Navigation ---
+
+    private async Task GoToPreviousPage()
+    {
+        if (pagedResult?.HasPrevious == true)
+        {
+            currentPage--;
+            await FetchData();
+        }
+    }
+
+    private async Task GoToNextPage()
+    {
+        if (pagedResult?.HasNext == true)
+        {
+            currentPage++;
+            await FetchData();
+        }
+    }
+
+    // --- Actions ---
 
     private void AddBook()
     {
@@ -197,7 +264,6 @@
             {
                 int modifiedById = 0;
 
-                // Extract the logged-in user's ID
                 if (AuthStateTask != null)
                 {
                     var authState = await AuthStateTask;
@@ -210,21 +276,20 @@
                     }
                 }
 
-                // Pass both the book ID and the user ID to the service
-                await BookService.DeleteBook(book.Id, modifiedById);
+                await BookService.DeleteBookAsync(book.Id, modifiedById);
 
-                if (!string.IsNullOrWhiteSpace(searchTerm))
-                {
-                    await SearchBooks();
-                }
-                else
-                {
-                    await LoadBooks();
-                }
+                // Reload the current page to reflect the deletion
+                await FetchData();
+            }
+            catch (HttpRequestException ex)
+            {
+                Console.WriteLine($"API Error deleting book: {ex.Message}");
+                errorMessage = "Failed to delete the book. Ensure you have the right permissions.";
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error deleting book: {ex.Message}");
+                errorMessage = "An unexpected error occurred during deletion.";
             }
         }
     }
