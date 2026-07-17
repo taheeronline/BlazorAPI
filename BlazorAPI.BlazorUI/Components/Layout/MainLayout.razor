@@ -15,12 +15,12 @@
 
             <AuthorizeView>
                 <Authorized>
-                    <button @onclick="HandleLogout" class="btn btn-outline-danger btn-sm px-4 fw-bold rounded-pill shadow-sm">
+                    <button id="btnLogout" @onclick="HandleLogout" class="btn btn-outline-danger btn-sm px-4 fw-bold rounded-pill shadow-sm">
                         <i class="bi bi-box-arrow-right me-1"></i> Logout
                     </button>
                 </Authorized>
                 <NotAuthorized>
-                    <a href="/login" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill shadow-sm">
+                    <a id="btnLogin" href="/login" class="btn btn-primary btn-sm px-4 fw-bold rounded-pill shadow-sm">
                         <i class="bi bi-box-arrow-in-right me-1"></i> Login
                     </a>
                 </NotAuthorized>
