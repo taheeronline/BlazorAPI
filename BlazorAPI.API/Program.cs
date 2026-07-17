@@ -10,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // Add OpenAPI documentation
-builder.Services.AddOpenApi();
+//builder.Services.AddOpenApi();
 
 // Add Entity Framework Core with SQL Server
 builder.Services.AddDbContext<MovieDbContext>(options =>
@@ -44,7 +44,7 @@ app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    //app.MapOpenApi();
 }
 
 app.UseHttpsRedirection();
