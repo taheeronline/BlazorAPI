@@ -11,7 +11,7 @@ using BlazorAPI.API.Persistence;
 
 namespace BlazorAPI.API.Migrations
 {
-    [DbContext(typeof(MovieDbContext))]
+    [DbContext(typeof(MyDbContext))]
     [Migration("20260615113753_UserHandlingUpdated")]
     partial class UserHandlingUpdated
     {

@@ -12,10 +12,10 @@ namespace BlazorAPI.API.Services.Implementation
     {
         // CHANGE: Renamed interface from 'IMovieService' to 'IMovieService'.
 
-        private readonly MovieDbContext _dbContext;
+        private readonly MyDbContext _dbContext;
         private readonly ILogger<MovieService> _logger;
 
-        public MovieService(MovieDbContext dbContext, ILogger<MovieService> logger)
+        public MovieService(MyDbContext dbContext, ILogger<MovieService> logger)
         {
             _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

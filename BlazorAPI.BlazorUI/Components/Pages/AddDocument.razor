@@ -1,0 +1,169 @@
+﻿@page "/documents/add"
+@rendermode InteractiveServer
+@using System.Security.Claims
+@using BlazorAPI.BlazorUI.DTOs.DocumentDTO
+@inject BlazorAPI.BlazorUI.Services.Interface.IDocumentService DocumentService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Add New Document</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-file-earmark-plus mr-2"></i>Add New Document</h2>
+        <p class="text-muted">Enter the details below and select a file to upload to the library.</p>
+    </div>
+
+    <div class="card shadow-sm border-0" style="max-width: 800px;">
+        <div class="card-body">
+            <!-- Form for adding a new document -->
+            <EditForm Model="newDocument" OnValidSubmit="HandleValidSubmit" FormName="AddDocumentForm">
+                <DataAnnotationsValidator />
+
+                <div class="row mb-3">
+                    <div class="col-md-12 mb-3">
+                        <label for="name" class="form-label fw-bold">Document Name</label>
+                        <InputText id="name" class="form-control" @bind-Value="newDocument.Name" placeholder="e.g., Q3 Financial Report" />
+                        <ValidationMessage For="() => newDocument.Name" class="text-danger small" />
+                    </div>
+
+                    <div class="col-md-12 mb-3">
+                        <label for="fileUpload" class="form-label fw-bold">Select File</label>
+                        <InputFile id="fileUpload" class="form-control" OnChange="HandleFileSelected" />
+                        @if (fileError != null)
+                        {
+                            <div class="text-danger small mt-1">@fileError</div>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 shadow-sm" disabled="@isSubmitting">
+                        @if (isSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            <span>Saving...</span>
+                        }
+                        else
+                        {
+                            <i class="bi bi-save"></i> <span>Save Document</span>
+                        }
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary px-4" @onclick="NavigateBack" disabled="@isSubmitting">
+                        Cancel
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    // 1. Add the Cascading Parameter to get the user's session data
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private DocumentCreateDto newDocument = new DocumentCreateDto();
+
+    private string? fileError;
+    private bool isSubmitting = false;
+
+    // Set a reasonable max file size (e.g., 10 MB)
+    private const long MaxAllowedFileSize = 10 * 1024 * 1024;
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        fileError = null;
+        var file = e.File;
+
+        if (file != null)
+        {
+            if (file.Size > MaxAllowedFileSize)
+            {
+                fileError = $"File size cannot exceed {MaxAllowedFileSize / (1024 * 1024)} MB.";
+                return;
+            }
+
+            try
+            {
+                // Auto-populate metadata from the selected file
+                newDocument.FileName = file.Name;
+                newDocument.ContentType = file.ContentType;
+
+                // If the user hasn't typed a custom name yet, default to the file name (without extension)
+                if (string.IsNullOrWhiteSpace(newDocument.Name))
+                {
+                    newDocument.Name = Path.GetFileNameWithoutExtension(file.Name);
+                }
+
+                // Read file into byte array for the FileContent property
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(MaxAllowedFileSize).CopyToAsync(ms);
+                newDocument.FileContent = ms.ToArray();
+            }
+            catch (Exception ex)
+            {
+                fileError = $"Error reading file: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Custom validation to ensure a file was actually selected and read properly
+        if (newDocument.FileContent == null || newDocument.FileContent.Length == 0)
+        {
+            fileError = "Please select a valid file to upload.";
+            return;
+        }
+
+        isSubmitting = true;
+        fileError = null;
+
+        try
+        {
+            // 2. Extract the user before sending to the API
+            if (AuthStateTask != null)
+            {
+                var authState = await AuthStateTask;
+                var user = authState.User;
+
+                if (user.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    // Find the ID we stored in CustomAuthStateProvider
+                    var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    if (int.TryParse(userIdString, out int userId))
+                    {
+                        // Note: If your DocumentCreateDto doesn't have a CreatedBy property,
+                        // you can ignore this step. The backend DocumentService we wrote earlier
+                        // currently handles user assignment on its end.
+                        // newDocument.CreatedBy = userId;
+                    }
+                }
+            }
+
+            // Call your API service to save the data
+            await DocumentService.CreateDocumentAsync(newDocument);
+
+            // Once saved successfully, redirect back to the document list
+            NavigationManager.NavigateTo("/documents");
+        }
+        catch (HttpRequestException ex)
+        {
+            fileError = $"Upload failed. Server error: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            fileError = $"An unexpected error occurred: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/documents");
+    }
+}

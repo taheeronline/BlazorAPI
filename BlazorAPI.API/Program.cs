@@ -13,7 +13,7 @@ builder.Services.AddControllers();
 //builder.Services.AddOpenApi();
 
 // Add Entity Framework Core with SQL Server
-builder.Services.AddDbContext<MovieDbContext>(options =>
+builder.Services.AddDbContext<MyDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"),
         sqlOptions => sqlOptions.EnableRetryOnFailure(
             maxRetryCount: 3,
@@ -24,6 +24,7 @@ builder.Services.AddDbContext<MovieDbContext>(options =>
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IDocumentService, DocumentService>();
 
 // Add logging
 builder.Services.AddLogging(logging =>

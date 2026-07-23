@@ -11,7 +11,7 @@ using BlazorAPI.API.Persistence;
 
 namespace BlazorAPI.API.Migrations
 {
-    [DbContext(typeof(MovieDbContext))]
+    [DbContext(typeof(MyDbContext))]
     [Migration("20260611134330_initialCreate")]
     partial class initialCreate
     {

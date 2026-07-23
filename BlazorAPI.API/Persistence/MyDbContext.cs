@@ -4,15 +4,16 @@ using System.Reflection;
 
 namespace BlazorAPI.API.Persistence
 {
-    public class MovieDbContext : DbContext
+    public class MyDbContext : DbContext
     {
-        public MovieDbContext(DbContextOptions<MovieDbContext> options) : base(options)
+        public MyDbContext(DbContextOptions<MyDbContext> options) : base(options)
         {
         }
 
         public DbSet<Movie> Movies { get; set; }
         public DbSet<User> Users { get; set; } 
         public DbSet<Book> Books { get; set; }
+        public DbSet<Document> Documents { get; set; } 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -11,7 +11,7 @@ using BlazorAPI.API.Persistence;
 
 namespace BlazorAPI.API.Migrations
 {
-    [DbContext(typeof(MovieDbContext))]
+    [DbContext(typeof(MyDbContext))]
     [Migration("20260615152234_MarkForeignKeyOtional")]
     partial class MarkForeignKeyOtional
     {

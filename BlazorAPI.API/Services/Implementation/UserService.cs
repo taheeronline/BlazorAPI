@@ -11,10 +11,10 @@ namespace BlazorAPI.API.Services.Implementation
 {
     public class UserService : IUserService
     {
-        private readonly MovieDbContext _context;
+        private readonly MyDbContext _context;
         private readonly ILogger<UserService> _logger;
 
-        public UserService(MovieDbContext context, ILogger<UserService> logger)
+        public UserService(MyDbContext context, ILogger<UserService> logger)
         {
             _context = context ?? throw new ArgumentNullException(nameof(context));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

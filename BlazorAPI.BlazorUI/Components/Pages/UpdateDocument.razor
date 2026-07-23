@@ -1,0 +1,199 @@
+﻿@page "/documents/edit/{Id:int}"
+@rendermode InteractiveServer
+@using System.Security.Claims
+@using BlazorAPI.BlazorUI.DTOs.DocumentDTO
+@inject BlazorAPI.BlazorUI.Services.Interface.IDocumentService DocumentService
+@inject NavigationManager NavigationManager
+
+<PageTitle>Edit Document</PageTitle>
+
+<div class="container-fluid mt-4">
+    <div class="mb-4">
+        <h2><i class="bi bi-pencil-square"></i> Edit Document</h2>
+        <p class="text-muted">Update the details or replace the file for this document below.</p>
+    </div>
+
+    @if (editDocument == null)
+    {
+        <div class="d-flex justify-content-center my-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0" style="max-width: 800px;">
+            <div class="card-body p-4">
+
+                <EditForm Model="editDocument" OnValidSubmit="HandleValidSubmit" FormName="EditDocumentForm">
+                    <DataAnnotationsValidator />
+
+                    <div class="row mb-3">
+                        <div class="col-md-12 mb-3">
+                            <label for="name" class="form-label fw-bold">Document Name</label>
+                            <InputText id="name" class="form-control" @bind-Value="editDocument.Name" />
+                            <ValidationMessage For="() => editDocument.Name" class="text-danger small" />
+                        </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label for="fileUpload" class="form-label fw-bold">Replace File (Optional)</label>
+                            <div class="mb-2 text-muted small">
+                                Current File: <span class="fw-bold text-dark">@currentFileName</span>
+                            </div>
+                            <InputFile id="fileUpload" class="form-control" OnChange="HandleFileSelected" />
+                            @if (fileError != null)
+                            {
+                                <div class="text-danger small mt-1">@fileError</div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 mt-2">
+                        <button type="submit" class="btn btn-primary px-4 shadow-sm" disabled="@isSubmitting">
+                            @if (isSubmitting)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                <span>Updating...</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-save"></i> <span>Update Document</span>
+                            }
+                        </button>
+                        <button type="button" class="btn btn-outline-secondary px-4" @onclick="NavigateBack" disabled="@isSubmitting">
+                            Cancel
+                        </button>
+                    </div>
+                </EditForm>
+
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthStateTask { get; set; }
+
+    private DocumentUpdateDto? editDocument;
+    private string? currentFileName;
+
+    private string? fileError;
+    private bool isSubmitting = false;
+
+    // Set a reasonable max file size (e.g., 10 MB)
+    private const long MaxAllowedFileSize = 10 * 1024 * 1024;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var existingDocument = await DocumentService.GetMetadataByIdAsync(Id);
+
+            if (existingDocument != null && existingDocument.Id > 0)
+            {
+                currentFileName = existingDocument.FileName;
+
+                editDocument = new DocumentUpdateDto
+                {
+                    Id = existingDocument.Id,
+                    Name = existingDocument.Name
+                    // Note: We don't populate FileContent here unless the user decides to upload a new file
+                };
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/documents");
+            }
+        }
+        catch (Exception)
+        {
+            NavigationManager.NavigateTo("/documents");
+        }
+    }
+
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        fileError = null;
+        var file = e.File;
+
+        if (file != null && editDocument != null)
+        {
+            if (file.Size > MaxAllowedFileSize)
+            {
+                fileError = $"File size cannot exceed {MaxAllowedFileSize / (1024 * 1024)} MB.";
+                return;
+            }
+
+            try
+            {
+                // Populate metadata from the new file
+                editDocument.FileName = file.Name;
+                editDocument.ContentType = file.ContentType;
+
+                // Read file into byte array for the FileContent property
+                using var ms = new MemoryStream();
+                await file.OpenReadStream(MaxAllowedFileSize).CopyToAsync(ms);
+                editDocument.FileContent = ms.ToArray();
+            }
+            catch (Exception ex)
+            {
+                fileError = $"Error reading file: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (fileError != null) return;
+
+        isSubmitting = true;
+
+        try
+        {
+            if (editDocument != null && AuthStateTask != null)
+            {
+                var authState = await AuthStateTask;
+                var user = authState.User;
+
+                if (user.Identity is not null && user.Identity.IsAuthenticated)
+                {
+                    var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    if (int.TryParse(userIdString, out int userId))
+                    {
+                        // Assuming you added ModifiedBy to DocumentUpdateDto based on the Book example.
+                        // If not, you can safely ignore or remove this block.
+                        // editDocument.ModifiedBy = userId;
+                    }
+                }
+
+                // The DocumentService interface takes the DTO directly which contains the Id
+                await DocumentService.UpdateDocumentAsync(editDocument);
+                NavigationManager.NavigateTo("/documents");
+            }
+        }
+        catch (HttpRequestException ex)
+        {
+            fileError = $"Update failed. Server error: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating document: {ex.Message}");
+            fileError = "An unexpected error occurred.";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo("/documents");
+    }
+}

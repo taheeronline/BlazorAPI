@@ -38,6 +38,12 @@ builder.Services.AddHttpClient<IUserService, UserService>(client =>
     client.BaseAddress = apiBaseAddress;
 });
 
+// Register DocumentService (NEW)
+builder.Services.AddHttpClient<IDocumentService, DocumentService>(client =>
+{
+    client.BaseAddress = apiBaseAddress;
+});
+
 // --------------------------------
 
 var app = builder.Build();
